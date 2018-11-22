@@ -1,0 +1,8 @@
+---
+- name: reload systemd after rhsso installation
+  listen: reload systemd
+  command: systemctl daemon-reload
+
+- name: restart rhsso
+  listen: reload systemd
+  service: name=rhsso enabled=yes state=restarted

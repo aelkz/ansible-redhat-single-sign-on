@@ -1,0 +1,29 @@
+---
+galaxy_info:
+  author: Raphael Abreu
+  description: Advanced role for Red Hat Single Sign-On 7.2 (update NOV/2018)
+  company: Red Hat
+  license:
+    - Apache 2.0
+  min_ansible_version: 2.1
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  - name: Fedora
+    versions:
+    - 25    
+  galaxy_tags:
+  - development
+  - java
+  - jboss
+  - sso
+  - keycloak
+  - security
+
+# Several Red Hat JBoss EAP server instances could be setup on the same host (cf. https://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse)
+allow_duplicates: no
+
+# Empty as otherwise the Galaxy import does not work as expected.
+# dependencies:
+#  - role: Maarc.rh-jboss-common

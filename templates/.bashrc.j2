@@ -1,0 +1,23 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+alias ll='ls -all'
+alias la='ll -all'
+alias l='ll'
+alias sb='source ~/.bashrc'
+alias vb='vi ~/.bashrc'
+alias ..='cd ..'
+alias h='history'
+
+# User specific aliases and functions
+ulimit -u 65000
+
+# echo $(dirname $(dirname $(dirname $(readlink -f $(which java)))))
+# /etc/alternatives/java_sdk/bin/java --version
+# /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.161-0.b14.el7_4.x86_64/bin/java -version
+JAVA_HOME="/etc/alternatives/java_sdk"
+export JAVA_HOME
