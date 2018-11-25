@@ -1,0 +1,21 @@
+---
+
+- name: "(00) Check 'rhsso_install_dir' variable"
+  fail: 
+    msg: "This role requires 'rhsso_install_dir' to be set and non empty."
+  when: rhsso_install_dir is not defined or rhsso_install_dir == ''
+
+- name: "(00) Check 'cli_dir' variable"
+  fail: 
+    msg: "This role requires 'cli_dir' to be set and non empty as it defines some CLI files in 'cli_list'"
+  when: cli_list.0 is defined and (cli_dir is not defined or cli_dir == '')
+
+- name: "(00) Fail for Missing Red Hat Network Username"
+  fail:
+    msg: "This role requires rhn_username to be set and non empty."
+  when: rhn_username is not defined or rhn_username == ''
+
+- name: "(00) Fail for Missing Red Hat Network Password"
+  fail:
+    msg: "This role requires rhn_password to be set and non empty."
+  when: rhn_password is not defined or rhn_password == ''

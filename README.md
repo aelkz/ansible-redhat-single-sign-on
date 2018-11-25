@@ -21,6 +21,7 @@ This role is based on:
 - https://github.com/Maarc/ansible_middleware_soe showing how to easily operate Red Hat JBoss middleware products using ansible role.
 - https://github.com/Maarc/ansible-role-redhat-jboss-eap
 - https://github.com/Maarc/ansible-role-redhat-jboss-common
+- https://github.com/sabre1041/redhat-csp-download
 
 Requirements
 ------------
@@ -45,6 +46,26 @@ Installation
 ------------
 
 ### TODO
+
+
+1. create a .vault with your secret
+
+2. create the file vars/rhn_credentials.yml with the following content of your redhat account. Example:
+---
+
+rhn_username: us3r
+rhn_password: p@ss
+rhn_poolid: a1b2-c3d4-e5f6-g7h8-i9j0k
+
+3. execute
+```shell
+ansible-vault encrypt vars/rhn_credentials.yml --vault-password-file=.vault
+```
+
+Execution
+---------
+
+ansible-playbook rhsso.yml -vvv -k -c paramiko --vault-password-file .vault
 
 
 Role Variables

@@ -1,0 +1,76 @@
+---
+
+- name: "(03) Set Red Hat Single Sign On Service Directories Facts"
+  set_fact:
+    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_name }}"
+
+- name: "(03) Create group for Red Hat Single Sign-On"
+  group:
+    name: "{{ item.group }}"
+    system: yes
+    state: present
+    gid: "{{ item.group_id }}"
+  with_items:
+    - "{{ jboss }}"
+
+- name: "(03) Create user for Red Hat Single Sign-On"
+  user:
+    name: "{{ item.user }}"
+    comment: "{{ item.user }} user for Red Hat Single Sign-On {{ rhsso_artifact_version }}"
+    uid: "{{ item.group_id }}"
+    group: "{{ item.group }}"
+    home: "{{ rhsso_install_dir }} / {{ rhsso_home_dir_name }}"
+    shell: "/bin/bash"
+  with_items:
+    - "{{ jboss }}"
+
+- name: "(03) Create .bashrc file for the {{ jboss['user'] }} user"
+  template:
+    owner: "{{ item.user }}"
+    group: "{{ item.group }}"
+    src: .bashrc.j2
+    dest: "{{ item.user_home }}/.bashrc"
+    mode: "0644"
+  with_items:
+    - "{{ jboss }}"
+
+# Defensive Programming To Check If EAP Is Already Installed
+- name: "(03) Check existence of existing installation"
+  become: true
+  stat:
+    path: "{{ rhsso_install_dir + '/' + rhsso_home_dir_name + '/version.txt'}}"
+  register: rhsso_installation_exists
+
+- name: "(03) Async Download JBoss EAP from Red Hat Customer Portal"
+  redhat_csp_download:
+    url: "{{ rhsso_artifact_url }}"
+    dest: "{{ rhsso_download_dir }}"
+    username: "{{ rhn_username }}"
+    password: "{{ rhn_password }}"
+  async: 7200
+  poll: 0
+  register: csp_rhsso_download
+  tags:
+    - rhsso
+  when: rhsso_installation_exists.stat.exists == false
+
+- name: "(03) Check On Red Hat Single Sign-On {{ rhsso_artifact_version }} Download Completion (CSP)"
+  async_status: jid={{ csp_rhsso_download.ansible_job_id }}
+  register: job_result1
+  until: job_result1.finished
+  retries: 600
+  delay: 10
+  tags:
+    - rhsso
+  when: rhsso_installation_exists.stat.exists == false
+
+- name: "(03) Extract Red Hat Sign-On {{ rhsso_artifact_version }}"
+  become: true
+  unarchive:
+    src: "{{ rhsso_download_dir }}"
+    dest: "{{ rhsso_install_dir }}"
+    creates: "{{ rhsso_home_dir_name }}"
+    copy: no
+    owner: "{{ jboss['user'] }}"
+    group: "{{ jboss['group'] }}"
+  when: rhsso_installation_exists.stat.exists == false

@@ -1,8 +1,21 @@
 ---
-- name: reload systemd after rhsso installation
-  listen: reload systemd
-  command: systemctl daemon-reload
 
-- name: restart rhsso
-  listen: reload systemd
-  service: name=rhsso enabled=yes state=restarted
+##
+# As the EAP service would be named like jboss-as-standlone.sh or jboss-eap.sh
+# the service ( directed via systemctl ) requires the service name to be without
+# extension hence we use spiltext filter to get the service name wihout '.sh' extension
+##
+- name: restart-rhsso
+  become: true
+  service:
+    name: "{{ rhsso_service_file }}"
+    state: restarted
+
+# Sanity test if everything was setup right and RHSSO is running
+- name: verify-rhsso-is-running
+  wait_for: port="{{ instance_calculated_http_port }}" host="{{ instance_bind_address }}" timeout=120
+  notify: check-rhsso-is-available
+
+- name: check-rhsso-is-available
+  uri:
+    url: "http://{{ instance_bind_address }}:{{ instance_bind_address }}"

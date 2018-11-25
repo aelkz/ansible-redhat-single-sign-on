@@ -1,0 +1,37 @@
+---
+
+- name: "(02) Install EPEL repository"
+  block:
+    - name: Download EPEL for RHEL
+      get_url:
+        url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+        dest: "/tmp"
+      tags:
+        - common
+
+    - name: Install EPEL for RHEL
+      action: "{{ ansible_pkg_mgr }} name=/tmp/epel-release-latest-7.noarch.rpm state=present"
+      changed_when: False
+      tags:
+        - common
+
+- name: "(02) Install {{ jvm_pkg_name }}"
+  action: "{{ ansible_pkg_mgr }} name={{ jvm_pkg_name }} state=latest"
+  when: install_jvm|bool
+  tags:
+  - common
+
+- name: "(02) Install unzip"
+  action: "{{ ansible_pkg_mgr }} name=unzip state=latest"
+  tags:
+  - common
+
+- name: "(02) Install nmap"
+  action: "{{ ansible_pkg_mgr }} name=nmap state=latest"
+  tags:
+  - common
+
+- name: "(02) Install git"
+  action: "{{ ansible_pkg_mgr }} name=git state=latest"
+  tags:
+  - common
