@@ -1,6 +1,14 @@
 ---
 
 # /--------------------------------------------------------------------------------\
+# | Global configurations                                                          |
+# \--------------------------------------------------------------------------------/
+
+role_id: ansible-role-redhat-single-sign-on
+ansible_roles_path: /etc/ansible/playbooks/roles
+subtasks_directory_path: tasks/subtasks
+
+# /--------------------------------------------------------------------------------\
 # | Red Hat Single Sign-On artifact                                                |
 # \--------------------------------------------------------------------------------/
 
@@ -10,7 +18,7 @@ rhsso_artifact_name: "rh-sso-{{ rhsso_artifact_version }}.zip"
 
 rhsso_artifact_checksums:
   # https://access.redhat.com/cspdownload/../../rhsso-7.2.0/rh-sso-7.2.0.zip
-  '7.2.0': sha256:ebfd24b0ad078453ed9168664903662edb3ac64ec8f9407f45c656735faf87c9
+  '7.2.0': ebfd24b0ad078453ed9168664903662edb3ac64ec8f9407f45c656735faf87c9
 
 # /--------------------------------------------------------------------------------\
 # | Red Hat Single Sign-On patches                                                 |
@@ -20,40 +28,44 @@ rhsso_apply_patches: true
 
 rhsso_patches:
   patch_1:
-    id: 7.2.1
+    id: '7.2.1'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=57071&product=core.service.rhsso
     filename: 72-1-patch.zip
-    sha256checksum: sha256:1aafaa63905b9edb6da934f0e7fe63734b5ae82434e029ef94ca70c27e7add6c
+    sha256checksum: 1aafaa63905b9edb6da934f0e7fe63734b5ae82434e029ef94ca70c27e7add6c
   patch_2:
-    id: 7.2.2
+    id: '7.2.2'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=58111&product=core.service.rhsso
     filename: 72-2-patch.zip
-    sha256checksum: sha256:353a27833c8afa799a85155030e4ccde990bf0099aad35bb7587de01a82373d0 
+    sha256checksum: 353a27833c8afa799a85155030e4ccde990bf0099aad35bb7587de01a82373d0 
   patch_3:
-    id: 7.2.3
+    id: '7.2.3'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=58981&product=core.service.rhsso
     filename: 72-3-patch.zip
-    sha256checksum: sha256:9f7b0c76287286bedfdcc0f18f0363201646b2cb738d861ac6336427ed646f69 
+    sha256checksum: 9f7b0c76287286bedfdcc0f18f0363201646b2cb738d861ac6336427ed646f69 
   patch_4:
-    id: 7.2.4
+    id: '7.2.4'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=60781&product=core.service.rhsso
     filename: 72-4-patch.zip
-    sha256checksum: sha256:654b8a308c592b847e4b31291158538afcb89099a0065cb555dc224ac5f5a06a
+    sha256checksum: 654b8a308c592b847e4b31291158538afcb89099a0065cb555dc224ac5f5a06a
   patch_5:
-    id: 7.2.5
+    id: '7.2.5'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=63001&product=core.service.rhsso
     filename: 72-5-patch.zip
-    sha256checksum: sha256:e23add18383d3e1d7f269c991e5401072289756fe3b4ccf1dd1a1b1ef832e751
+    sha256checksum: e23add18383d3e1d7f269c991e5401072289756fe3b4ccf1dd1a1b1ef832e751
 
 # /--------------------------------------------------------------------------------\
 # | Red Hat Single Sign-On configurations                                          |
 # \--------------------------------------------------------------------------------/
 
-rhsso_install_dir: /usr/share/
+rhsso_install_dir: /usr/share
 
 rhsso_home_dir_name: rh-sso-7.2
 
-rhsso_download_dir: /tmp/
+rhsso_conf_dir_name: rh-sso
+
+rhsso_download_dir: /tmp
+
+rhsso_log_dir: "/var/log/{{ rhsso_conf_dir_name }}"
 
 # Red Hat JBoss EAP admin user name
 rhsso_instance_admin_user: jboss

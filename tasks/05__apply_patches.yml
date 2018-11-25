@@ -2,7 +2,7 @@
 
 - name: "(05) Set Red Hat Single Sign On Service Directories Facts"
   set_fact:
-    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_name }}"
+    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
 
 - name: "(05) apply-rhsso-patches"
   become_user: "{{ jboss['user'] }}"
@@ -12,6 +12,6 @@
       patch apply {{ rhsso_download_dir }}/{{ rhsso_patches[item]['filename'] }} --verbose --override-all
     debug:
       msg: "Applying patch Id: {{ rhsso_patches[item]['id'] }} - from: {{ rhsso_patches[item]['url'] }}"
-  with_items: "{{ rhsso_patches:keys() }}"
+  with_items: "{{ rhsso_patches.keys() }}"
   when: >-
     rhsso_apply_patches|bool

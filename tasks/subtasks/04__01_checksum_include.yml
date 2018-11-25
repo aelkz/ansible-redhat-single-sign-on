@@ -1,0 +1,17 @@
+---
+
+- name: "(04 subtask 01) Acquire Red Hat Single Sign-On {{ item.value.id }} patch sha256 checkum facts"
+  set_fact:
+    patch_checksum: "{{ item.value.sha256checksum }}"
+
+- debug:
+    msg: "Checksum sha256 {{ item.value.id }} patch from: {{ item.value.url }}"
+
+- stat:
+    path: "{{ rhsso_download_dir }}/{{ item.value.filename }}"
+    checksum_algorithm: sha256
+  register: checksum_result
+
+- fail:
+    msg: "Failure, downloaded patch version {{ item.value.id }} is corrupted."
+  when: checksum_result.stat.checksum != patch_checksum

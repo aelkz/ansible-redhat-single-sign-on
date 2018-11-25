@@ -2,27 +2,33 @@
 
 - name: "(04) download-rhsso-patches"
   redhat_csp_download: 
-    url: "{{ rhsso_patches[item]['url'] }}"
-    dest: "{{ rhsso_download_dir }}/{{ rhsso_patches[item]['filename'] }}"
+    url: "{{ item.value.url }}"
+    dest: "{{ rhsso_download_dir }}/{{ item.value.filename }}"
     username: "{{ rhn_username }}"
     password: "{{ rhn_password }}"
+  vars:
     debug:
-      msg: "Downloading patch Id: {{ rhsso_patches[item]['id'] }} - from: {{ rhsso_patches[item]['url'] }}"
-  with_items: "{{ rhsso_patches:keys() }}"
+      msg: "Downloading {{ item.key }} : {{ item.value.id }} from: {{ item.value.url }}"
+  async: 600
+  poll: 0
+  register: csp_rhsso_patches_download
+  with_dict: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool
 
-- name: "(04) checksum-rhsso-downloaded-patches"
-  block:
-  - stat:
-      path: "{{ rhsso_download_dir }}/{{ rhsso_patches[item]['filename'] }}"
-      checksum_algorithm: sha256
-    register: patch
+- name: "(04) Check On Red Hat Single Sign-On {{ rhsso_artifact_version }} patches download completion"
+  async_status: jid={{ item.ansible_job_id }}
+  register: jobs_result
+  until: jobs_result.finished
+  retries: 60
+  delay: 10
+  with_items: "{{ csp_rhsso_patches_download.results }}"
+  when: rhsso_apply_patches|bool
 
-  - debug:
-      msg: "Checksum patch Id: {{ rhsso_patches[item]['id'] }} - from: {{ rhsso_patches[item]['url'] }}"
+- name: "(04) Set subtasks directory path facts"
+  set_fact:
+    subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
-  - fail:
-      msg: "Failure, downloaded {{ rhsso_patches[item]['id'] }} patch is corrupted."
-    when: patch.stat.checksum != {{ rhsso_patches[item]['sha256checksum'] }}
-    with_items: "{{ rhsso_patches:keys() }}"
+- name: "(04) Checksum Red Hat Single Sign-On patches"
+  include: "{{ subtasks_path }}/04__01_checksum_include.yml patch={{ item }}"
+  with_dict: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool

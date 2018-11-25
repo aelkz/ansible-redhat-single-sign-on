@@ -2,7 +2,17 @@
 
 - name: "(03) Set Red Hat Single Sign On Service Directories Facts"
   set_fact:
-    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_name }}"
+    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
+
+- easy_install:
+    name: pip
+    state: latest
+
+- pip:
+    name: lxml
+
+- pip:
+    name: requests
 
 - name: "(03) Create group for Red Hat Single Sign-On"
   group:
@@ -19,7 +29,7 @@
     comment: "{{ item.user }} user for Red Hat Single Sign-On {{ rhsso_artifact_version }}"
     uid: "{{ item.group_id }}"
     group: "{{ item.group }}"
-    home: "{{ rhsso_install_dir }} / {{ rhsso_home_dir_name }}"
+    home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
     shell: "/bin/bash"
   with_items:
     - "{{ jboss }}"
@@ -29,7 +39,7 @@
     owner: "{{ item.user }}"
     group: "{{ item.group }}"
     src: .bashrc.j2
-    dest: "{{ item.user_home }}/.bashrc"
+    dest: "{{ jboss_eap_home }}/.bashrc"
     mode: "0644"
   with_items:
     - "{{ jboss }}"
@@ -44,7 +54,7 @@
 - name: "(03) Async Download JBoss EAP from Red Hat Customer Portal"
   redhat_csp_download:
     url: "{{ rhsso_artifact_url }}"
-    dest: "{{ rhsso_download_dir }}"
+    dest: "{{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
     username: "{{ rhn_username }}"
     password: "{{ rhn_password }}"
   async: 7200
@@ -52,9 +62,9 @@
   register: csp_rhsso_download
   tags:
     - rhsso
-  when: rhsso_installation_exists.stat.exists == false
+  when: not rhsso_installation_exists.stat.exists
 
-- name: "(03) Check On Red Hat Single Sign-On {{ rhsso_artifact_version }} Download Completion (CSP)"
+- name: "(03) Check On Red Hat Single Sign-On {{ rhsso_artifact_version }} download completion"
   async_status: jid={{ csp_rhsso_download.ansible_job_id }}
   register: job_result1
   until: job_result1.finished
@@ -62,15 +72,117 @@
   delay: 10
   tags:
     - rhsso
-  when: rhsso_installation_exists.stat.exists == false
+  when: not rhsso_installation_exists.stat.exists
+
+- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} sha256 checkum facts"
+  set_fact:
+    jboss_eap_checksum: "{{ rhsso_artifact_checksums[rhsso_artifact_version] }}"
+
+- name: "(03) checksum rhsso server zip file"
+  block:
+  - stat:
+      path: "{{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
+      checksum_algorithm: sha256
+    register: server
+
+  - fail:
+      msg: "Failure, downloaded {{ rhsso_artifact_name }} file is corrupted."
+    when: server.stat.checksum != jboss_eap_checksum
+  when: not rhsso_installation_exists.stat.exists
 
 - name: "(03) Extract Red Hat Sign-On {{ rhsso_artifact_version }}"
   become: true
   unarchive:
-    src: "{{ rhsso_download_dir }}"
+    src: "{{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
     dest: "{{ rhsso_install_dir }}"
     creates: "{{ rhsso_home_dir_name }}"
     copy: no
     owner: "{{ jboss['user'] }}"
     group: "{{ jboss['group'] }}"
-  when: rhsso_installation_exists.stat.exists == false
+  when: not rhsso_installation_exists.stat.exists
+
+- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} final installation directory facts"
+  set_fact:
+    jboss_eap_directory: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
+
+- name: "(03) Change permissions on {{ jboss_eap_directory }} installation directory"
+  file:
+    state: directory
+    recurse: yes
+    path: "{{ jboss_eap_directory }}"
+    owner: "{{ jboss['user'] }}"
+    group: "{{ jboss['group'] }}"
+
+- name: "(03) Create {{ rhsso_log_dir }} LOG directory"
+  file:
+    path: "{{ rhsso_log_dir }}"
+    owner: "{{ jboss['user'] }}"
+    group: "{{ jboss['group'] }}"
+    state: directory
+    mode: "755"
+
+- name: "(03) Copy {{ rhsso_conf_dir_name }} service file to /etc/init.d/{{ rhsso_conf_dir_name }}"
+  become: true
+  copy:
+    src: "{{ jboss_eap_directory }}/bin/init.d/jboss-eap-rhel.sh"
+    dest: "/etc/init.d/{{ rhsso_conf_dir_name }}"
+    remote_src: True
+    owner: "{{ jboss['user'] }}"
+    group: "{{ jboss['group'] }}"
+
+- name: "(03) Copy {{ rhsso_conf_dir_name }} configuration file to /etc/default/{{ rhsso_conf_dir_name }}.conf"
+  become: true
+  copy:
+    src: "{{ jboss_eap_directory }}/bin/init.d/{{ rhsso_conf_dir_name }}.conf"
+    dest: "/etc/default/"
+    remote_src: True
+    owner: "{{ jboss['user'] }}"
+    group: "{{ jboss['group'] }}"
+
+- name: "Modify JBoss EAP Service File"
+  lineinfile:
+    state: present
+    path: "/etc/init.d/{{ rhsso_conf_dir_name }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - {regexp: "^# processname:", line: "# processname: jboss-{{ instance_name }}"}
+    - {regexp: "^# pidfile:", line: "# pidfile: {{ jboss_eap_pid_file }}"}
+    - {regexp: "^# config:", line: "# config: {{ jboss_eap_service_conf_file }}"}
+    - {regexp: "JBOSS_CONF=", line: " JBOSS_CONF='{{ jboss_eap_service_conf_file }}'"}
+    - {regexp: "^  JBOSS_NAME", line: "  JBOSS_NAME='jboss-{{ instance_name }}'"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- name: "Add {{ rhsso_conf_dir_name }} Service"
+  become: true
+  command: "chkconfig --add {{ rhsso_conf_dir_name }}"
+
+- name: "Enable {{ rhsso_conf_dir_name }} Service"
+  become: true
+  service:
+    name: "{{ rhsso_conf_dir_name }}"
+    enabled: yes
+
+- name: "(03) Remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
+  shell: "/bin/rm -rf {{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
+  shell: "/usr/sbin/lsof +L1 {{ rhsso_download_dir }} > /dev/null"

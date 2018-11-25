@@ -35,3 +35,8 @@
   action: "{{ ansible_pkg_mgr }} name=git state=latest"
   tags:
   - common
+
+- name: "(02) Install lsof"
+  action: "{{ ansible_pkg_mgr }} name=lsof state=latest"
+  tags:
+  - common
