@@ -1,8 +1,34 @@
 ---
 
-- name: "(03) Set Red Hat Single Sign On Service Directories Facts"
+- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
-    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
+    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_instance_name }}"
+    jboss_eap_checksum: "{{ rhsso_artifact_checksums[rhsso_artifact_version] }}"
+    jboss_eap_bin_dir: "{{ {{ jboss_eap_home }}/bin"
+    jboss_eap_runtime_conf_src_file: "{{ jboss_eap_bin_dir }}/{{ rhsso_default_mode }}.conf"
+    jboss_eap_runtime_conf_file: "/etc/default/{{ rhsso_instance_name }}.conf"
+    jboss_eap_service_src_file: "{{ jboss_eap_bin_dir }}/init.d/jboss-eap-rhel.sh"
+    jboss_eap_initd_service_file: "/etc/init.d/{{ rhsso_instance_name }}"
+    jboss_eap_pid_directory: "/var/run/{{ rhsso_home_dir_name }}"
+    jboss_eap_pid_file: "/var/run/{{ rhsso_home_dir_name }}/{{ rhsso_instance_name }}.pid"
+    jboss_eap_log_directory: "/var/log/{{ rhsso_home_dir_name }}"
+    jboss_eap_log_file: "/var/log/{{ rhsso_home_dir_name }}/{{ rhsso_instance_name }}.log"
+
+- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} JVM configuration facts"
+  set_fact:
+    instance_java_opts: "{{ (instance_java_opts + ' ' + item) | trim }}"
+  with_items:
+    - "{{ '-Duser.timezone=' + timezone }}"
+    - "{{ '-Duser.language=' + language }}"
+    - "{{ '-Duser.country=' + country }}"
+    - "{{ '-Djava.net.preferIPv4Stack=true' }}"
+    - "{{ '-Djava.security.egd=file:/dev/./urandom' }}"
+    - "{{ '-Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS -Djava.awt.headless=true' }}"
+    - "{{ '-server -XX:+DoEscapeAnalysis -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -XX:MaxGCPauseMillis=500 -XX:+UseLargePages' }}"
+    - "{{ '-Xmx' + jvm_xmx + ' -Xms' + jvm_xms + ' -verbose:gc -Xloggc:gc.log.`date +%d%m%Y%H%M%S` -XX:+PrintGCDetails' }}"
+    - "{{ '-XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+AggressiveOpts -XX:+UseCompressedOops' }}"
+    - "{{ '-XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=' + compressedClassSpaceSize + ' -XX:MetaspaceSize=' + metaspaceSize + ' -XX:MaxMetaspaceSize=' + maxMetaspaceSize }}"
+    - "{{ '-Djboss.server.base.dir=' + rhsso_instance_name }}"
 
 - easy_install:
     name: pip
@@ -48,7 +74,7 @@
 - name: "(03) Check existence of existing installation"
   become: true
   stat:
-    path: "{{ rhsso_install_dir + '/' + rhsso_home_dir_name + '/version.txt'}}"
+    path: "{{ jboss_eap_home + '/version.txt'}}"
   register: rhsso_installation_exists
 
 - name: "(03) Async Download JBoss EAP from Red Hat Customer Portal"
@@ -74,10 +100,6 @@
     - rhsso
   when: not rhsso_installation_exists.stat.exists
 
-- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} sha256 checkum facts"
-  set_fact:
-    jboss_eap_checksum: "{{ rhsso_artifact_checksums[rhsso_artifact_version] }}"
-
 - name: "(03) checksum rhsso server zip file"
   block:
   - stat:
@@ -101,86 +123,84 @@
     group: "{{ jboss['group'] }}"
   when: not rhsso_installation_exists.stat.exists
 
-- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} final installation directory facts"
-  set_fact:
-    jboss_eap_directory: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
-
-- name: "(03) Change permissions on {{ jboss_eap_directory }} installation directory"
+- name: "(03) Change permissions on {{ jboss_eap_home }} installation directory"
   file:
     state: directory
     recurse: yes
-    path: "{{ jboss_eap_directory }}"
+    path: "{{ jboss_eap_home }}"
     owner: "{{ jboss['user'] }}"
     group: "{{ jboss['group'] }}"
 
-- name: "(03) Create {{ rhsso_log_dir }} LOG directory"
+# /var/log/rh-sso-7.2
+- name: "(03) Create {{ jboss_eap_log_directory }} LOG directory"
   file:
-    path: "{{ rhsso_log_dir }}"
+    path: "{{ jboss_eap_log_directory }}"
     owner: "{{ jboss['user'] }}"
     group: "{{ jboss['group'] }}"
     state: directory
     mode: "755"
 
-- name: "(03) Copy {{ rhsso_conf_dir_name }} service file to /etc/init.d/{{ rhsso_conf_dir_name }}"
+# /var/run/rh-sso-7.2
+- name: "(03) Create {{ rhsso_instance_name }} Service Runtime Data Directory"
+  file:
+    path: "{{ jboss_eap_pid_directory }}"
+    owner: "{{ jboss['user'] }}"
+    group: "{{ jboss['group'] }}"
+    state: directory
+    mode: "755"
+
+# /etc/init.d/rh-sso
+- name: "(03) Copy {{ jboss_eap_service_src_file }} service file to {{ jboss_eap_initd_service_file }}"
   become: true
   copy:
-    src: "{{ jboss_eap_directory }}/bin/init.d/jboss-eap-rhel.sh"
-    dest: "/etc/init.d/{{ rhsso_conf_dir_name }}"
+    src: "{{ jboss_eap_service_src_file }}"
+    dest: "{{ jboss_eap_initd_service_file }}"
     remote_src: True
     owner: "{{ jboss['user'] }}"
     group: "{{ jboss['group'] }}"
 
-- name: "(03) Copy {{ rhsso_conf_dir_name }} configuration file to /etc/default/{{ rhsso_conf_dir_name }}.conf"
-  become: true
-  copy:
-    src: "{{ jboss_eap_directory }}/bin/init.d/{{ rhsso_conf_dir_name }}.conf"
-    dest: "/etc/default/"
-    remote_src: True
+# /etc/default/rh-sso.conf
+- name: "(03) Copy {{ jboss_eap_runtime_conf_src_file }} configuration file to {{ jboss_eap_runtime_conf_file }}"
+  template:
     owner: "{{ jboss['user'] }}"
     group: "{{ jboss['group'] }}"
+    src: jboss-eap.conf.j2
+    dest: "{{ jboss_eap_runtime_conf_file }}"
+    mode: "755"
 
-- name: "Modify JBoss EAP Service File"
+- name: "(03) Modify {{ jboss_eap_runtime_conf_file }} file"
   lineinfile:
     state: present
-    path: "/etc/init.d/{{ rhsso_conf_dir_name }}"
+    path: "{{ jboss_eap_runtime_conf_file }}"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   with_items:
-    - {regexp: "^# processname:", line: "# processname: jboss-{{ instance_name }}"}
+    - {regexp: "^# processname:", line: "# processname: {{ rhsso_instance_name }}"}
     - {regexp: "^# pidfile:", line: "# pidfile: {{ jboss_eap_pid_file }}"}
-    - {regexp: "^# config:", line: "# config: {{ jboss_eap_service_conf_file }}"}
-    - {regexp: "JBOSS_CONF=", line: " JBOSS_CONF='{{ jboss_eap_service_conf_file }}'"}
-    - {regexp: "^  JBOSS_NAME", line: "  JBOSS_NAME='jboss-{{ instance_name }}'"}
+    - {regexp: "^# config:", line: "# config: {{ jboss_eap_runtime_conf_file }}"}
+    - {regexp: "JBOSS_CONF=", line: " JBOSS_CONF='{{ jboss_eap_runtime_conf_file }}'"}
+    - {regexp: "^  JBOSS_NAME", line: "  JBOSS_NAME='{{ rhsso_instance_name }}'"}
 
+# http://www.mydailytutorials.com/ansible-lineinfile-module-examples/
+- name: "(03) Clear {{ rhsso_instance_name }} JVM JAVA_OPTS"
+  lineinfile:
+    dest: "{{ jboss_eap_runtime_conf_src_file }}"
+    regexp: '^JAVA_OPTS="-Xms'
+    state: absent
 
+- name: "(03) Set {{ rhsso_instance_name }} JVM JAVA_OPTS"
+  lineinfile:
+    dest: "{{ jboss_instance_mktemp.stdout }}/{{ jboss_eap_runtime_conf_filename }}"
+    line: "JAVA_OPTS=\"$JAVA_OPTS {{ instance_java_opts }}\""
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-- name: "Add {{ rhsso_conf_dir_name }} Service"
+- name: "(03) Add {{ rhsso_instance_name }} service"
   become: true
-  command: "chkconfig --add {{ rhsso_conf_dir_name }}"
+  command: "chkconfig --add {{ rhsso_instance_name }}"
 
-- name: "Enable {{ rhsso_conf_dir_name }} Service"
+- name: "(03) Enable {{ rhsso_instance_name }} service"
   become: true
   service:
-    name: "{{ rhsso_conf_dir_name }}"
+    name: "{{ rhsso_instance_name }}"
     enabled: yes
 
 - name: "(03) Remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
