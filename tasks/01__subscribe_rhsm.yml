@@ -16,4 +16,4 @@
     - name: Attach to pool
       command: subscription-manager attach --pool="{{ rhn_poolid }}"
       ignore_errors: yes
-  when: rhsm_subscribe_host|bool
+  when: config_rhsm_subscribe_host|bool

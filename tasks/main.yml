@@ -15,8 +15,8 @@
 #  become: true
 
 #### 
-#- include: 03__download_and_install.yml
-#  become: true
+- include: 03__download_and_install.yml
+  become: true
 
 #### 
 #- include: 04__download_patches_and_checksum.yml

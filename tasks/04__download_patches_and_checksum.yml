@@ -29,6 +29,6 @@
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
 - name: "(04) Checksum Red Hat Single Sign-On patches"
-  include: "{{ subtasks_path }}/04__01_checksum_include.yml patch={{ item }}"
+  include: "{{ subtasks_path }}/04__01_checksum_patches.yml patch={{ item }}"
   with_dict: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool

@@ -1,0 +1,7 @@
+---
+
+- name: "{{ jboss_eap_instance_name }} (05) Ensure JBoss EAP is running"
+  service:
+    name: "{{ jboss_eap_instance_service_name }}"
+    state: started
+    enabled: yes

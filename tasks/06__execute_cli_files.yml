@@ -1,0 +1,46 @@
+---
+
+- name: "{{ jboss_eap_instance_name }} (05) Execute CLI file(s)"
+  become_user: "{{ jboss.user }}"
+  shell: 'bash -c "nohup {{ jboss_home }}/bin/standalone.sh -c {{ jboss_eap_instance_standalone_file }} -Djboss.socket.binding.port-offset={{ jboss_eap_instance_port_offset }} -Djboss.management.native.port={{ jboss_eap_instance_cli_default_port }} -Djboss.server.base.dir={{ jboss_eap_instance_dir }} --admin-only & " && sleep 10 && {{ jboss_home }}/bin/jboss-cli.sh -c --controller=127.0.0.1:{{ jboss_eap_instance_cli_port }} --file="{{ jboss_eap_instance_dir }}/configuration/{{ item | basename }}" && pkill -TERM -f "^java(.*){{ jboss_eap_instance_dir }}"'
+  with_items: "{{ cli_list }}"
+  when: conf_11.changed
+  ignore_errors: yes
+  register: cli_result
+
+- name: "{{ jboss_eap_instance_name }} (05) Stop faulty instances"
+  when: conf_11.changed and cli_result.failed is defined and cli_result.failed
+  become_user: "{{ jboss.user }}"
+  ignore_errors: yes
+  shell: 'pkill -TERM -f "^java(.*){{ jboss_eap_instance_dir }}"'
+
+- name: "{{ jboss_eap_instance_name }} (05) Failure"
+  when: conf_11.changed and cli_result.failed is defined and cli_result.failed
+  fail: msg="One of the CLI commands failed."
+
+# cli: tcp-cluster.cli
+# > inicializar server
+# > executar comando cli (./jboss-cli.sh --connect --controller={IP_DOMAIN_CONTROLLER}:9990 --file=../tcp-cluster.cli)
+# cli: add-user-keycloak.sh
+# > executar comando cli (../bin/add-user-keycloak.sh --sc ../domain/servers/server-one/configuration -r master -u <username> -p <password>)
+# chown -R sso:sso /usr/share/rh-sso-7.2/domain/servers
+# systemctl restart rh-sso
+
+# cli: /profile=auth-server-clustered/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=com.oracle, driver-name=oracle)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=connection-url,value="jdbc:oracle:thin:@(DESCRIPTION =
+# (ADDRESS = (PROTOCOL = TCP)(HOST = exafnde1-scan3.fnde.gov.br)(PORT = 1521))
+# (CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = rubi.fnde.gov.br)))")
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=driver-name,value=oracle)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=user-name,value=USUARIO)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=password,value=SENHA)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=min-pool-size,value=5)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=max-pool-size,value=30)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=initial-pool-size,value=5)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=pool-use-strict-min,value=true)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=check-valid-connection-sql,value="select 1 from dual")
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=valid-connection-checker-class-name,value=org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=background-validation,value=true)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=background-validation-millis,value=600000)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=exception-sorter-class-name,value=org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter)
+# cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=stale-connection-checker-class-name,value=org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker)
+# cli: :reload-servers(blocking=true)

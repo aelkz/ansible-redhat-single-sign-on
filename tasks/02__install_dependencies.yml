@@ -17,7 +17,7 @@
 
 - name: "(02) Install {{ jvm_pkg_name }}"
   action: "{{ ansible_pkg_mgr }} name={{ jvm_pkg_name }} state=latest"
-  when: install_jvm|bool
+  when: config_install_jvm|bool
   tags:
   - common
 

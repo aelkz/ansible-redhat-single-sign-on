@@ -7,6 +7,7 @@
 role_id: ansible-role-redhat-single-sign-on
 ansible_roles_path: /etc/ansible/playbooks/roles
 subtasks_directory_path: tasks/subtasks
+binaries_directory_path: files
 
 # /--------------------------------------------------------------------------------\
 # | Red Hat Single Sign-On artifact                                                |
@@ -62,6 +63,8 @@ rhsso_patches:
 # /var/run/rh-sso-7.2/rh-sso.pid
 # /etc/init.d/rh-sso
 # /etc/default/rh-sso.conf
+# user: sso
+# group: sso
 
 rhsso_install_dir: /usr/share
 
@@ -71,21 +74,23 @@ rhsso_instance_name: rh-sso
 
 rhsso_download_dir: /tmp
 
-# Red Hat JBoss EAP admin user name
-rhsso_instance_admin_user: jboss
+# Red Hat JBoss EAP administration console user name (:9990)
+rhsso_console_admin_user: jboss
 
-# Red Hat JBoss EAP admin password ("redhat123!") hashed according to HEX( MD5( username ':' realm ':' password))
-rhsso_instance_admin_password: ba2caa9378fa898f1dea88804abe52b4
+# Red Hat JBoss EAP jgroups cluster user name
+rhsso_jgroups_user: jbservice
 
-rhsso_default_mode: domain
+# Red Hat Single Sign-On administration console user name (keycloak user)
+rhsso_keycloak_admin_user: admin
 
-rhsso_bind_default_web_address: 0.0.0.0
+# Red Hat JBoss EAP admin password (plain text: it will be encrypted with add-user.sh script)
+rhsso_console_admin_password: jboss@123
 
-rhsso_bind_default_management_address: 0.0.0.0
+rhsso_jgroups_password: jboss@123
 
-rhsso_default_http_port: 8080
+rhsso_keycloak_admin_password: admin
 
-rhsso_default_management_port: 9990
+rhsso_host_type: master
 
 # System user:group configuration
 jboss:
@@ -98,11 +103,12 @@ jboss:
 # \--------------------------------------------------------------------------------/
 
 config_install_java: true
-rhsm_subscribe_host: true
-install_jvm: true
-timezone: "America/Sao_Paulo"
-language: pt
-country: BR
+config_rhsm_subscribe_host: true
+config_install_jvm: true
+config_install_oracle_jdbc_driver: true
+config_timezone: "America/Sao_Paulo"
+config_language: pt
+config_country: BR
 
 # /--------------------------------------------------------------------------------\
 # | JVM configurations                                                             |
@@ -112,14 +118,12 @@ jvm_pkg_name: java-1.8.0-openjdk-devel
 
 # Value for the xms and xmx (both are set equal)
 # 30 GB * 1024 = 30720
+jvm_java_opts: ""
 jvm_xmx: "30720M"
 jvm_xms: "30720M"
 compressedClassSpaceSize: "2048M"
 metaspaceSize: "1024M"
 maxMetaspaceSize: "1024M"
-
-# Name of the used standalone XML file
-jboss_eap_instance_standalone_file: standalone.xml
 
 # /--------------------------------------------------------------------------------\
 # | CLI files used for the JBoss EAP configuration                                 |

@@ -6,17 +6,17 @@ JBOSS_HOME={{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}
 ## The username who should own the process.
 JBOSS_USER={{ jboss['user'] }}
 ## The mode JBoss EAP should start, standalone or domain
-JBOSS_MODE={{ rhsso_default_mode }}
+JBOSS_MODE=domain
 ## Configuration for standalone mode
 # JBOSS_CONFIG=standalone.xml
 ## Configuration for domain mode
 JBOSS_DOMAIN_CONFIG=domain.xml
-JBOSS_HOST_CONFIG=host-master.xml
+JBOSS_HOST_CONFIG=host-{{ rhsso_host_type }}.xml
 ## The amount of time to wait for startup
 STARTUP_WAIT=60
 ## The amount of time to wait for shutdown
 SHUTDOWN_WAIT=30
 ## Location to keep the console log
-JBOSS_CONSOLE_LOG={{ rhsso_log_dir }}/{{ rhsso_conf_dir_name }}.log
+JBOSS_CONSOLE_LOG={{ jboss_eap_log_directory }}/{{ rhsso_instance_name }}.log
 ## JBoss Mode ( only used by EAP7 init scripts )
-JBOSS_PIDFILE={{ rhsso_eap_pid_file }}
+JBOSS_PIDFILE={{ jboss_eap_pid_file }}

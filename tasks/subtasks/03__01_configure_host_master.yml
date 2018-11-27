@@ -1,0 +1,178 @@
+---
+
+- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} directory configuration facts"
+  set_fact:
+    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
+
+- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} directory configuration facts"
+  set_fact:
+    jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
+
+- name: "(03 subtask 01) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} host-master configuration facts"
+  set_fact:
+    jboss_eap_domain_home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}/domain/configuration"
+
+- name: "(03 subtask 01) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} host-master configuration facts"
+  set_fact:
+    jboss_eap_domain_xml_file: "{{ jboss_eap_domain_home }}/domain.xml"
+    jboss_eap_host_master_xml_file: "{{ jboss_eap_domain_home }}/host-master.xml"
+    jboss_eap_domain_server_one_home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}/domain/servers/server-one/configuration"
+    oracle_jdbc_driver: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
+
+- name: "(03 subtask 01) Configure Red Hat Single Sign-On host-master"
+  lineinfile:
+    state: present
+    path: "{{ jboss_eap_host_master_xml_file }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backrefs: yes
+    backup: yes
+  with_items:
+    - {regexp: "^(.*).management:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address.management:{{ ansible_default_ipv4.address }}}\"/>"}
+    - {regexp: "^(.*).address:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address:{{ ansible_default_ipv4.address }}}\"/>"}
+
+- name: "(03 subtask 01) Clear {{ jboss_eap_host_master_xml_file }} file"
+  lineinfile:
+    dest: "{{ jboss_eap_host_master_xml_file }}"
+    regexp: "^(.*)<server name=\"load-balancer\" group=\"load-balancer-group\"\/>"
+    state: absent
+
+- name: "(03 subtask 01) Clear {{ jboss_eap_host_master_xml_file }} file"
+  lineinfile:
+    dest: "{{ jboss_eap_host_master_xml_file }}"
+    regexp: "^(.*)<socket-bindings port-offset=\"150\"\/>"
+    state: absent
+
+- name: "(03 subtask 01) Clear {{ jboss_eap_domain_xml_file }} file"
+  blockinfile:
+    path: "{{ jboss_eap_domain_xml_file }}"
+    state: absent
+    block: |
+      <!-- load-balancer-group should be removed in production systems and replaced with a better softare or hardare based one -->
+      <server-group name=\"load-balancer-group\" profile=\"load-balancer\">
+          <jvm name=\"default\">
+              <heap size=\"64m\" max-size=\"512m\"/>
+          </jvm>
+          <socket-binding-group ref=\"load-balancer-sockets\"/>
+      </server-group>
+
+# JBoss EAP administration console user
+- name: "(03 subtask 01) Check existence of JBoss EAP administration console user"
+  shell: "grep '^{{ rhsso_console_admin_user }}' {{ jboss_eap_domain_home }}/mgmt-users.properties"
+  register: admin_user_exists
+  
+- name: "(03 subtask 01) Create {{ rhsso_console_admin_user }} JBoss EAP administration console user"
+  shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ rhsso_console_admin_password }} -u {{ rhsso_console_admin_user }} -e -s"
+  when: admin_user_exists.stdout == ""
+
+- name: "(03 subtask 01) Ensure {{ rhsso_console_admin_user }} JBoss EAP administration console user was created"
+  lineinfile:
+    name: "{{ jboss_eap_domain_home }}/mgmt-users.properties"
+    line: "{{ rhsso_console_admin_user }}"
+    state: present
+  check_mode: yes
+  register: admin_console_user
+  failed_when: admin_console_user is failed
+
+# JBoss EAP jgroups cluster user
+- name: "(03 subtask 01) Check existence of JBoss EAP jgroups cluster user"
+  shell: "grep '^{{ rhsso_jgroups_user }}' {{ jboss_eap_domain_home }}/mgmt-users.properties"
+  register: cluster_user_exists
+
+- name: "(03 subtask 01) Create {{ rhsso_jgroups_user }} JBoss EAP jgroups cluster user"
+  shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ rhsso_jgroups_password }} -u {{ rhsso_jgroups_user }} -e -s"
+  when: cluster_user_exists.stdout == ""
+
+- name: "(03 subtask 01) Ensure {{ rhsso_jgroups_user }} JBoss EAP jgroups cluster user was created"
+  lineinfile:
+    name: "{{ jboss_eap_domain_home }}/mgmt-users.properties"
+    line: "{{ rhsso_jgroups_user }}"
+    state: present
+  check_mode: yes
+  register: jgroups_cluster_user
+  failed_when: jgroups_cluster_user is failed
+
+# Red Hat Single Sign-On administration console user
+- name: "(03) Check existence of Red Hat Single Sign-On administration console user"
+  shell: "grep '^    \"username\" : \"{{ rhsso_keycloak_admin_user }}\"' {{ jboss_eap_domain_home }}/keycloak-add-user.json"
+  register: keycloak_exists
+
+- name: "(03 subtask 01) Create {{ rhsso_keycloak_admin_user }} Red Hat Single Sign-On administration console user"
+  shell: "{{ jboss_eap_bin_dir }}/add-user-keycloak.sh --domain --dc {{ jboss_eap_domain_home }} -r master -u {{ rhsso_keycloak_admin_user }} -p {{ rhsso_keycloak_admin_password }} --iterations 1024"
+  when: keycloak_exists.stdout == ""
+
+- name: "(03 subtask 01) Ensure {{ rhsso_keycloak_admin_user }} Red Hat Single Sign-On administration console user was created"
+  shell: "grep '^    \"username\" : \"{{ rhsso_keycloak_admin_user }}\"' {{ jboss_eap_domain_home }}/keycloak-add-user.json"
+  register: keycloak_admin_user
+  failed_when: keycloak_admin_user.stdout == ""
+
+- name: "(03 subtask 01) Create {{ jboss_eap_domain_server_one_home }} directory"
+  file:
+    path: "{{ jboss_eap_domain_server_one_home }}"
+    owner: "{{ jboss.user }}"
+    group: "{{ jboss.group }}"
+    state: directory
+    mode: "755"
+
+- name: "(03 subtask 01) Copy {{ jboss_eap_domain_home }}/keycloak-add-user.json file to {{ jboss_eap_domain_server_one_home }}"
+  become: true
+  copy:
+    src: "{{ jboss_eap_domain_home }}/keycloak-add-user.json"
+    dest: "{{ jboss_eap_domain_server_one_home }}/keycloak-add-user.json"
+    remote_src: True
+    owner: "{{ jboss.user }}"
+    group: "{{ jboss.group }}"
+    mode: "755"
+
+- name: "(03 subtask 01) Change permissions on {{ jboss_eap_home }} installation directory"
+  file:
+    state: directory
+    recurse: yes
+    path: "{{ jboss_eap_home }}"
+    owner: "{{ jboss.user }}"
+    group: "{{ jboss.group }}"
+
+- block:
+    - name: "(03 subtask 01) Deploy Oracle JDBC driver"
+      copy:
+        src: "{{ binaries_directory_path }}/ojdbc8.jar"
+        dest: "{{ rhsso_download_dir }}/ojdbc8.jar"
+
+    - name: "(03 subtask 01) Execute CLI: Install Oracle DBMS module (JDBC Driver)"
+      become_user: "{{ jboss.user }}"
+      shell: 'bash -c "nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --command=module add --name=com.oracle --resources={{ rhsso_download_dir }}/ojdbc8.jar --dependencies=javax.api,javax.transaction.api" && pkill -TERM -f "^java(.*){{ jboss_eap_home }}"'
+      ignore_errors: yes
+      register: oracle_jdbc_module_cli_result
+
+    - name: "(03 subtask 01) Starting Red Hat Single Sign-On"
+      become_user: "{{ jboss.user }}"
+      shell: "systemctl restart {{ rhsso_instance_name }}"
+
+    - name: "(03 subtask 01) Waiting for Red Hat Single Sign-On become available"
+      local_action:
+        module: wait_for
+          timeout=60
+          host={{ ansible_default_ipv4.address }}
+          port=8080
+          delay=5
+          state=started
+
+    - name: "(03 subtask 01) Execute CLI: Install Oracle DBMS module (JDBC Driver)"
+      become_user: "{{ jboss.user }}"
+      shell: 'bash -c "nohup {{ jboss_eap_home }}/bin/jboss-cli.sh -c --controller={{ ansible_default_ipv4.address }}:9990 --command=module add --name=com.oracle --resources=/root/ojdbc8.jar --dependencies=javax.api,javax.transaction.api" && pkill -TERM -f "^java(.*){{ jboss_eap_home }}"'
+      ignore_errors: yes
+      register: oracle_jdbc_driver_cli_result
+  when: config_install_oracle_jdbc_driver|bool
+
+# configuração do infinispan
+# max-entries="10000" max-entries="5000"
+# mode="ASYNC" mode="SYNC"
+# owners="2" ownwes="3"
+
+# configurar log-handler
+# > /path=custom.log.dir:add(path=/var/log/jboss/) 
+# > /profile=auth-server-clustered/subsystem=logging/periodic-size-rotating-file-handler=PERIODIC_SIZE_ROTATING_SSO:add(append=false,file={relative-to="custom.log.dir",path="sso-server.log"},rotate-size=5000,suffix=".yyyy-MM-dd",autoflush=true,max-backup-index=25,level="INFO",encoding="utf-8",autoflush=true,rotate-on-boot=true)
+# > /profile=auth-server-clustered/subsystem=logging/root-logger=ROOT:add-handler(name=PERIODIC_SIZE_ROTATING_SSO)
+
+# clean-up host-master.xml <server></server>
+# systemctl restart rh-sso
