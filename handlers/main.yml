@@ -1,15 +1,7 @@
 ---
 
-##
-# As the EAP service would be named like jboss-as-standlone.sh or jboss-eap.sh
-# the service ( directed via systemctl ) requires the service name to be without
-# extension hence we use spiltext filter to get the service name wihout '.sh' extension
-##
 - name: restart-rhsso
-  become: true
-  service:
-    name: "{{ rhsso_service_file }}"
-    state: restarted
+  service: name={{ general.instance_name }} state=restarted
 
 # Sanity test if everything was setup right and RHSSO is running
 - name: verify-rhsso-is-running

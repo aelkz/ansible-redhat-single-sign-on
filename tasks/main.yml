@@ -3,8 +3,8 @@
 - include_vars: rhn_credentials.yml
 
 #### 
-#- include: 00__check_required_variables.yml
-#  become: true
+- include: 00__check_required_variables.yml
+  become: true
 
 #### 
 #- include: 01__subscribe_rhsm.yml
@@ -19,9 +19,25 @@
   become: true
 
 #### 
-#- include: 04__download_patches_and_checksum.yml
+- include: 04__download_patches_and_checksum.yml
+  become: true
+
+#### 
+#- include: 05__apply_patches.yml
 #  become: true
 
 #### 
-- include: 05__apply_patches.yml
-  become: true
+#- include: 06__execute_cli_files.yml
+#  become: true
+
+#### 
+#- include: 07__clean_up.yml
+#  become: true
+
+#### 
+#- include: 08__start_servers.yml
+#  become: true
+
+# https://access.redhat.com/solutions/3092881
+# https://stackoverflow.com/questions/42867840/extract-last-two-number-of-ip-in-ansible
+# https://opensource.com/article/18/3/ansible-patch-systems

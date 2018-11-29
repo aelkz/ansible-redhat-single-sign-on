@@ -1,33 +1,35 @@
 ---
 
-- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} directory configuration facts"
+- name: "(03) acquire red hat single sign-On {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
-    jboss_eap_home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
+    jboss_eap_home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
 
-- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} directory configuration facts"
+- name: "(03) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
+    jboss_eap_domain_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/configuration"
 
-- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} directory configuration facts"
+- name: "(03) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_checksum: "{{ rhsso_artifact_checksums[rhsso_artifact_version] }}"
     jboss_eap_runtime_conf_src_file: "{{ jboss_eap_bin_dir }}/domain.conf"
-    jboss_eap_runtime_conf_file: "/etc/default/{{ rhsso_instance_name }}.conf"
+    jboss_eap_runtime_conf_file: "/etc/default/{{ general.instance_name }}.conf"
     jboss_eap_service_src_file: "{{ jboss_eap_bin_dir }}/init.d/jboss-eap-rhel.sh"
-    jboss_eap_initd_service_file: "/etc/init.d/{{ rhsso_instance_name }}"
-    jboss_eap_pid_directory: "/var/run/{{ rhsso_home_dir_name }}"
-    jboss_eap_pid_file: "/var/run/{{ rhsso_home_dir_name }}/{{ rhsso_instance_name }}.pid"
-    jboss_eap_log_directory: "/var/log/{{ rhsso_home_dir_name }}"
-    jboss_eap_log_file: "/var/log/{{ rhsso_home_dir_name }}/{{ rhsso_instance_name }}.log"
+    jboss_eap_initd_service_file: "/etc/init.d/{{ general.instance_name }}"
+    jboss_eap_pid_directory: "/var/run/{{ general.home_dir_name }}"
+    jboss_eap_pid_file: "/var/run/{{ general.home_dir_name }}/{{ general.instance_name }}.pid"
+    jboss_eap_log_directory: "/var/log/{{ general.home_dir_name }}"
+    jboss_eap_log_file: "/var/log/{{ general.home_dir_name }}/{{ general.instance_name }}.log"
     jboss_eap_java_opts: "{{ jvm_java_opts | default('') if jvm_java_opts is defined else '' }}"
+    jboss_eap_host_type: "{{ jboss.host_type }}"
 
-- name: "(03) Acquire Red Hat Single Sign-On {{ rhsso_artifact_version }} JVM configuration facts"
+- name: "(03) acquire red hat single sign-on {{ rhsso_artifact_version }} JVM configuration facts"
   set_fact:
     jboss_eap_java_opts: "{{ (jboss_eap_java_opts + ' ' + item) | trim }}"
   with_items:
-    - "{{ '-Duser.timezone=' + config_timezone }}"
-    - "{{ '-Duser.language=' + config_language }}"
-    - "{{ '-Duser.country=' + config_country }}"
+    - "{{ '-Duser.timezone=' + config.timezone_main }}"
+    - "{{ '-Duser.language=' + config.timezone_language }}"
+    - "{{ '-Duser.country=' + config.timezone_country }}"
     - "{{ '-Djava.net.preferIPv4Stack=true' }}"
     - "{{ '-Djava.security.egd=file:/dev/./urandom' }}"
     - "{{ '-Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS -Djava.awt.headless=true' }}"
@@ -35,7 +37,7 @@
     - "{{ '-Xmx' + jvm_xmx + ' -Xms' + jvm_xms + ' -verbose:gc -Xloggc:gc.log.`date +%d%m%Y%H%M%S` -XX:+PrintGCDetails' }}"
     - "{{ '-XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+AggressiveOpts -XX:+UseCompressedOops' }}"
     - "{{ '-XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=' + compressedClassSpaceSize + ' -XX:MetaspaceSize=' + metaspaceSize + ' -XX:MaxMetaspaceSize=' + maxMetaspaceSize }}"
-    - "{{ '-Djboss.server.base.dir=' + rhsso_home_dir_name }}"
+    - "{{ '-Djboss.server.base.dir=' + general.home_dir_name }}"
 
 # JVM
 #- name: "{{ jboss_eap_instance_name }} {{ info }} Update standalone.conf (3/3)"
@@ -79,27 +81,27 @@
 - pip:
     name: requests
 
-- name: "(03) Create group for Red Hat Single Sign-On"
+- name: "(03) create group for red hat single sign-On"
   group:
     name: "{{ item.group }}"
     system: yes
     state: present
     gid: "{{ item.group_id }}"
   with_items:
-    - "{{ jboss }}"
+    - "{{ owner }}"
 
-- name: "(03) Create user for Red Hat Single Sign-On"
+- name: "(03) create user for red hat single sign-on"
   user:
     name: "{{ item.user }}"
     comment: "{{ item.user }} user for Red Hat Single Sign-On {{ rhsso_artifact_version }}"
     uid: "{{ item.group_id }}"
     group: "{{ item.group }}"
-    home: "{{ rhsso_install_dir }}/{{ rhsso_home_dir_name }}"
+    home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
     shell: "/bin/bash"
   with_items:
-    - "{{ jboss }}"
+    - "{{ owner }}"
 
-- name: "(03) Create .bashrc file for the {{ jboss.user }} user"
+- name: "(03) create .bashrc file for the {{ owner.user }} user"
   template:
     owner: "{{ item.user }}"
     group: "{{ item.group }}"
@@ -107,19 +109,19 @@
     dest: "{{ jboss_eap_home }}/.bashrc"
     mode: "0644"
   with_items:
-    - "{{ jboss }}"
+    - "{{ owner }}"
 
 # Defensive Programming To Check If EAP Is Already Installed
-- name: "(03) Check existence of existing installation"
+- name: "(03) check existence of existing installation"
   become: true
   stat:
     path: "{{ jboss_eap_home + '/version.txt'}}"
   register: rhsso_installation_exists
 
-- name: "(03) Async Download JBoss EAP from Red Hat Customer Portal"
+- name: "(03) async download jboss eap from red hat customer portal"
   redhat_csp_download:
     url: "{{ rhsso_artifact_url }}"
-    dest: "{{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
+    dest: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
     username: "{{ rhn_username }}"
     password: "{{ rhn_password }}"
   async: 7200
@@ -129,7 +131,7 @@
     - rhsso
   when: not rhsso_installation_exists.stat.exists
 
-- name: "(03) Check On Red Hat Single Sign-On {{ rhsso_artifact_version }} download completion"
+- name: "(03) check on red hat single sign-on {{ rhsso_artifact_version }} download completion"
   async_status: jid={{ csp_rhsso_download.ansible_job_id }}
   register: job_result1
   until: job_result1.finished
@@ -142,7 +144,7 @@
 - name: "(03) checksum rhsso server zip file"
   block:
   - stat:
-      path: "{{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
+      path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
       checksum_algorithm: sha256
     register: server
 
@@ -151,128 +153,220 @@
     when: server.stat.checksum != jboss_eap_checksum
   when: not rhsso_installation_exists.stat.exists
 
-- name: "(03) Extract Red Hat Sign-On {{ rhsso_artifact_version }}"
+- name: "(03) extract red hat sign-on {{ rhsso_artifact_version }}"
   become: true
   unarchive:
-    src: "{{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
-    dest: "{{ rhsso_install_dir }}"
-    creates: "{{ rhsso_home_dir_name }}"
+    src: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
+    dest: "{{ general.install_dir }}"
+    creates: "{{ general.home_dir_name }}"
     copy: no
-    owner: "{{ jboss.user }}"
-    group: "{{ jboss.group }}"
+    owner: "{{ owner.user }}"
+    group: "{{ owner.group }}"
   when: not rhsso_installation_exists.stat.exists
 
-- name: "(03) Change permissions on {{ jboss_eap_home }} installation directory"
+- name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
   file:
     state: directory
     recurse: yes
     path: "{{ jboss_eap_home }}"
-    owner: "{{ jboss.user }}"
-    group: "{{ jboss.group }}"
+    owner: "{{ owner.user }}"
+    group: "{{ owner.group }}"
 
 # /var/log/rh-sso-7.2
-- name: "(03) Create {{ jboss_eap_log_directory }} LOG directory"
+- name: "(03) create {{ jboss_eap_log_directory }} log directory"
   file:
     path: "{{ jboss_eap_log_directory }}"
-    owner: "{{ jboss.user }}"
-    group: "{{ jboss.group }}"
+    owner: "{{ owner.user }}"
+    group: "{{ owner.group }}"
     state: directory
     mode: "755"
 
 # /var/run/rh-sso-7.2
-- name: "(03) Create {{ rhsso_instance_name }} Service Runtime Data Directory"
+- name: "(03) create {{ general.instance_name }} service runtime data directory"
   file:
     path: "{{ jboss_eap_pid_directory }}"
-    owner: "{{ jboss.user }}"
-    group: "{{ jboss.group }}"
+    owner: "{{ owner.user }}"
+    group: "{{ owner.group }}"
     state: directory
     mode: "755"
 
 # /etc/init.d/rh-sso
-- name: "(03) Copy {{ jboss_eap_service_src_file }} service file to {{ jboss_eap_initd_service_file }}"
+- name: "(03) copy {{ jboss_eap_service_src_file }} service file to {{ jboss_eap_initd_service_file }}"
   become: true
   copy:
     src: "{{ jboss_eap_service_src_file }}"
     dest: "{{ jboss_eap_initd_service_file }}"
     remote_src: True
-    owner: "{{ jboss.user }}"
-    group: "{{ jboss.group }}"
+    owner: "{{ owner.user }}"
+    group: "{{ owner.group }}"
     mode: "755"
 
 # /etc/default/rh-sso.conf
-- name: "(03) Copy {{ jboss_eap_runtime_conf_src_file }} configuration file to {{ jboss_eap_runtime_conf_file }}"
+- name: "(03) copy {{ jboss_eap_runtime_conf_src_file }} configuration file to {{ jboss_eap_runtime_conf_file }}"
   template:
-    owner: "{{ jboss.user }}"
-    group: "{{ jboss.group }}"
+    owner: "{{ owner.user }}"
+    group: "{{ owner.group }}"
     src: jboss-eap.conf.j2
     dest: "{{ jboss_eap_runtime_conf_file }}"
     mode: "755"
 
-- name: "(03) Modify {{ jboss_eap_initd_service_file }} file"
+- name: "(03) modify {{ jboss_eap_initd_service_file }} file"
   lineinfile:
     state: present
     path: "{{ jboss_eap_initd_service_file }}"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   with_items:
-    - {regexp: "^# processname:", line: "# processname: {{ rhsso_instance_name }}"}
+    - {regexp: "^# processname:", line: "# processname: {{ general.instance_name }}"}
     - {regexp: "^# pidfile:", line: "# pidfile: {{ jboss_eap_pid_file }}"}
     - {regexp: "^# config:", line: "# config: {{ jboss_eap_runtime_conf_file }}"}
     - {regexp: "JBOSS_CONF=", line: "JBOSS_CONF='{{ jboss_eap_runtime_conf_file }}'"}
-    - {regexp: "^  JBOSS_NAME", line: "JBOSS_NAME='{{ rhsso_instance_name }}'"}
+    - {regexp: "^  JBOSS_NAME", line: "JBOSS_NAME='{{ general.instance_name }}'"}
 
 # http://www.mydailytutorials.com/ansible-lineinfile-module-examples/
-- name: "(03) Clear {{ rhsso_instance_name }} JVM JAVA_OPTS"
+- name: "(03) clear {{ general.instance_name }} jvm JAVA_OPTS"
   lineinfile:
     dest: "{{ jboss_eap_runtime_conf_file }}"
     regexp: '^JAVA_OPTS="-Xms'
     state: absent
 
-- name: "(03) Set {{ rhsso_instance_name }} JVM JAVA_OPTS"
+- name: "(03) set {{ general.instance_name }} jvm JAVA_OPTS"
   lineinfile:
     dest: "{{ jboss_eap_runtime_conf_file }}"
     line: "JAVA_OPTS=\"$JAVA_OPTS {{ jboss_eap_java_opts }}\""
 
-- name: "(03) Add {{ rhsso_instance_name }} service"
+- name: "(03) add {{ general.instance_name }} service"
   become: true
-  command: "chkconfig --add {{ rhsso_instance_name }}"
+  command: "chkconfig --add {{ general.instance_name }}"
 
-- name: "(03) Enable {{ rhsso_instance_name }} service"
+- name: "(03) enable {{ general.instance_name }} service"
   become: true
   service:
-    name: "{{ rhsso_instance_name }}"
+    name: "{{ general.instance_name }}"
     enabled: yes
 
 # Reloading systemd. Should be executed here and not as a handler.
-- name: "(03) {{ rhsso_instance_name }} reload systemd"
+- name: "(03) {{ general.instance_name }} reload systemd"
   command: systemctl daemon-reload
 
-- name: "(03) Remove 20-nproc.conf file"
+- name: "(03) remove 20-nproc.conf file"
   file: path={{ item }} state=absent
   with_items:
     - "/etc/security/limits.d/20-nproc.conf"
   ignore_errors: true
 
-- name: "(03) Configure {{ jboss.user }} ulimit (max. open files for user)"
+- name: "(03) configure {{ owner.user }} ulimit (max. open files for user)"
   lineinfile:
     path: /etc/security/limits.conf
-    line: "{{ jboss.user }}              -       nofile         65000"
+    line: "{{ owner.user }}              -       nofile         65000"
 
-- name: "(03) Remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
-  shell: "/bin/rm -rf {{ rhsso_download_dir }}/{{ rhsso_artifact_name }}"
+- name: "(03) remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
+  shell: "/bin/rm -rf {{ general.download_dir }}/{{ rhsso_artifact_name }}"
 
-- name: "(03) Remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
-  shell: "/usr/sbin/lsof +L1 {{ rhsso_download_dir }} > /dev/null"
+- name: "(03) remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
+  shell: "/usr/sbin/lsof +L1 {{ general.download_dir }} > /dev/null"
   ignore_errors: true
 
-- name: "(03) Set subtasks directory path facts"
+# JBoss EAP administration console user
+- name: "(03) check existence of jboss eap administration console user"
+  shell: "grep '^{{ jboss.console_admin_user }}' {{ jboss_eap_domain_home }}/mgmt-users.properties"
+  ignore_errors: true
+  register: admin_user_exists
+
+- name: "(03) Enforce secure permissions on password files"
+  file:
+    path: "{{ jboss_eap_domain_home }}/{{ item }}"
+    owner: "{{ owner.user }}"
+    group: "{{ owner.group }}"
+    mode: "0600"
+  with_items:
+    - mgmt-groups.properties
+    - mgmt-users.properties
+ 
+- name: "(03) create {{ jboss.console_admin_user }} jboss eap administration console user"
+  shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.console_admin_password }} -u {{ jboss.console_admin_user }} -e -s"
+  when: admin_user_exists.stdout == ""
+
+- name: "(03) ensure {{ jboss.console_admin_user }} jbss eap administration console user was created"
+  lineinfile:
+    name: "{{ jboss_eap_domain_home }}/mgmt-users.properties"
+    line: "{{ jboss.console_admin_user }}"
+    state: present
+  check_mode: yes
+  register: admin_console_user
+  failed_when: admin_console_user is failed
+
+- block:
+    - name: "(03) deploy oracle jdbc driver"
+      copy:
+        src: "{{ binaries_directory_path }}/ojdbc8.jar"
+        dest: "{{ general.download_dir }}/ojdbc8.jar"
+
+    - name: "(03) check if jdbc driver: module.xml file already exists"
+      stat:
+        path: "{{ jboss_eap_home }}/modules/com/oracle/main/module.xml"
+      register: module_result
+
+    - name: "(03) check if jdbc driver: ojdbc8.jar file already exists"
+      stat:
+        path: "{{ jboss_eap_home }}/modules/com/oracle/main/ojdbc8.jar"
+      register: jdbc_result
+
+    # this will translate to something like:
+    # bash -c 'nohup /usr/share/rh-sso-7.2/bin/jboss-cli.sh --command="module add --name=com.oracle --resources=/tmp/ojdbc8.jar --dependencies=javax.api,javax.transaction.api" && pkill -TERM -f "^java(.*)/usr/share/rh-sso-7.2"'
+    - name: "(03) execute cli: install oracle dbms module (jdbc driver)"
+      become_user: "{{ owner.user }}"
+      shell: "bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --command=\"module add --name=com.oracle --resources={{ general.download_dir }}/ojdbc8.jar --dependencies=javax.api,javax.transaction.api\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'"
+      ignore_errors: yes
+      register: oracle_jdbc_module_cli_result
+      when: module_result.stat.exists == false and jdbc_result.stat.exists == false
+
+    - name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ jboss_eap_home }}"
+        owner: "{{ owner.user }}"
+        group: "{{ owner.group }}"
+      when: jboss_eap_host_type == "master"
+      notify:
+        - restart-rhsso
+
+    - name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ jboss_eap_home }}"
+        owner: "{{ owner.user }}"
+        group: "{{ owner.group }}"
+      when: jboss_eap_host_type == "slave"
+
+    - name: "(03) waiting for red hat single sign-on become available"
+      local_action:
+        module: wait_for
+          timeout=120
+          host={{ ansible_default_ipv4.address }}
+          port=8080
+          delay=5
+          state=started
+      when: jboss_eap_host_type == "master"
+
+    - name: "(03) execute cli: install oracle dbms module (jdbc driver)"
+      become_user: "{{ owner.user }}"
+      shell: "bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --connect --controller={{ ansible_default_ipv4.address }}:9990 --command=\"/profile=auth-server-clustered/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=com.oracle, driver-name=oracle)\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'"
+      ignore_errors: yes
+      register: oracle_jdbc_driver_cli_result
+      when: jboss_eap_host_type == "master"
+  when: config.install_jdbc_oracle|bool
+
+- name: "(03) set subtasks directory path facts"
   set_fact:
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
-- name: "(03) Check and install host-master node"
+- name: "(03) check and install host-master node"
   include: "{{ subtasks_path }}/03__01_configure_host_master.yml"
-  when: rhsso_host_type == "master"
+  when: jboss_eap_host_type == "master"
 
-- name: "(03) Check and install host-slave node"
+- name: "(03) check and install host-slave node"
   include: "{{ subtasks_path }}/03__02_configure_host_slave.yml"
-  when: rhsso_host_type == "slave"
+  when: jboss_eap_host_type == "slave"

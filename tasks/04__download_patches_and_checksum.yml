@@ -1,34 +1,19 @@
 ---
 
-- name: "(04) download-rhsso-patches"
-  redhat_csp_download: 
-    url: "{{ item.value.url }}"
-    dest: "{{ rhsso_download_dir }}/{{ item.value.filename }}"
-    username: "{{ rhn_username }}"
-    password: "{{ rhn_password }}"
-  vars:
-    debug:
-      msg: "Downloading {{ item.key }} : {{ item.value.id }} from: {{ item.value.url }}"
-  async: 600
-  poll: 0
-  register: csp_rhsso_patches_download
-  with_dict: "{{ rhsso_patches }}"
-  when: rhsso_apply_patches|bool
-
-- name: "(04) Check On Red Hat Single Sign-On {{ rhsso_artifact_version }} patches download completion"
-  async_status: jid={{ item.ansible_job_id }}
-  register: jobs_result
-  until: jobs_result.finished
-  retries: 60
-  delay: 10
-  with_items: "{{ csp_rhsso_patches_download.results }}"
-  when: rhsso_apply_patches|bool
-
-- name: "(04) Set subtasks directory path facts"
+- name: "(04) set patches checked constraints"
   set_fact:
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
-- name: "(04) Checksum Red Hat Single Sign-On patches"
-  include: "{{ subtasks_path }}/04__01_checksum_patches.yml patch={{ item }}"
+- name: "(04) set subtasks directory path facts"
+  set_fact:
+    subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
+
+- name: "(04) check and download red hat single sign-on patches"
+  include: "{{ subtasks_path }}/04__01_subtask.yml patch={{ item }}"
+  with_dict: "{{ rhsso_patches }}"
+  when: rhsso_apply_patches|bool
+
+- name: "(04) checksum downloaded red hat single sign-on patches"
+  include: "{{ subtasks_path }}/04__02_subtask.yml patch={{ item }}"
   with_dict: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool

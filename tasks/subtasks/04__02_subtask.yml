@@ -1,0 +1,53 @@
+---
+
+- set_fact:
+    obj: "{{ item }}"
+
+- name: "(04 subtask 02) Acquire Red Hat Single Sign-On {{ obj.value.id }} patch sha256 checkum facts"
+  set_fact:
+    patch_checksum: "{{ obj.value.sha256checksum }}"
+
+# check before
+- stat:
+    path: "{{ general.download_dir }}/{{ obj.value.filename }}"
+    checksum_algorithm: sha256
+  register: checksum_result
+
+- name: "(04) deleting patch id:{{ obj.value.id }} - reason: checksum failed or download corrupted."
+  file: path={{ item }} state=absent
+  with_items:
+    - "{{ general.download_dir }}/{{ obj.value.filename }}"
+  ignore_errors: true
+  when: checksum_result.stat.checksum != patch_checksum
+
+- name: "(04) download red hat single sign-on patch id:{{ obj.value.id }}"
+  redhat_csp_download: 
+    url: "{{ obj.value.url }}"
+    dest: "{{ general.download_dir }}/{{ obj.value.filename }}"
+    username: "{{ rhn_username }}"
+    password: "{{ rhn_password }}"
+  vars:
+    debug:
+      msg: "Downloading {{ obj.key }} : {{ obj.value.id }} from: {{ obj.value.url }}"
+  async: 600
+  poll: 0
+  register: patch_download_request
+  when: checksum_result.stat.checksum != patch_checksum
+
+- name: "(04) check on red hat single sign-on {{ rhsso_artifact_version }} patch id:{{ obj.value.id }} download thread"
+  async_status: jid={{ patch_download_request.ansible_job_id }}
+  register: jobs_result
+  until: jobs_result.finished
+  retries: 60
+  delay: 10
+  when: checksum_result.stat.checksum != patch_checksum
+
+# check again after download
+- stat:
+    path: "{{ general.download_dir }}/{{ obj.value.filename }}"
+    checksum_algorithm: sha256
+  register: checksum_result
+
+- fail:
+    msg: "Failure, downloaded patch version {{ obj.value.id }} is corrupted. Check your network connection."
+  when: checksum_result.stat.checksum != patch_checksum

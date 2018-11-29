@@ -1,6 +1,6 @@
 ---
 
-- name: "(02) Install EPEL repository"
+- name: "(02) install EPEL repository"
   block:
     - name: Download EPEL for RHEL
       get_url:
@@ -15,28 +15,28 @@
       tags:
         - common
 
-- name: "(02) Install {{ jvm_pkg_name }}"
+- name: "(02) install {{ jvm_pkg_name }}"
   action: "{{ ansible_pkg_mgr }} name={{ jvm_pkg_name }} state=latest"
-  when: config_install_jvm|bool
+  when: config.install_java|bool
   tags:
   - common
 
-- name: "(02) Install unzip"
+- name: "(02) install unzip"
   action: "{{ ansible_pkg_mgr }} name=unzip state=latest"
   tags:
   - common
 
-- name: "(02) Install nmap"
+- name: "(02) install nmap"
   action: "{{ ansible_pkg_mgr }} name=nmap state=latest"
   tags:
   - common
 
-- name: "(02) Install git"
+- name: "(02) install git"
   action: "{{ ansible_pkg_mgr }} name=git state=latest"
   tags:
   - common
 
-- name: "(02) Install lsof"
+- name: "(02) install lsof"
   action: "{{ ansible_pkg_mgr }} name=lsof state=latest"
   tags:
   - common

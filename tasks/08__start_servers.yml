@@ -1,6 +1,6 @@
 ---
 
-- name: "{{ jboss_eap_instance_name }} (05) Ensure JBoss EAP is running"
+- name: "(08) ensure red hat single sign-on servers are running"
   service:
     name: "{{ jboss_eap_instance_service_name }}"
     state: started

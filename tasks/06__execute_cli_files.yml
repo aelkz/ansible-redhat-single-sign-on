@@ -18,6 +18,10 @@
   when: conf_11.changed and cli_result.failed is defined and cli_result.failed
   fail: msg="One of the CLI commands failed."
 
+# /--------------------------------------------------------------------------------\
+# | TCP:TCPPING                                                                    |
+# \--------------------------------------------------------------------------------/
+
 # cli: tcp-cluster.cli
 # > inicializar server
 # > executar comando cli (./jboss-cli.sh --connect --controller={IP_DOMAIN_CONTROLLER}:9990 --file=../tcp-cluster.cli)
@@ -25,6 +29,10 @@
 # > executar comando cli (../bin/add-user-keycloak.sh --sc ../domain/servers/server-one/configuration -r master -u <username> -p <password>)
 # chown -R sso:sso /usr/share/rh-sso-7.2/domain/servers
 # systemctl restart rh-sso
+
+# /--------------------------------------------------------------------------------\
+# | ORACLE DBMS URL                                                                |
+# \--------------------------------------------------------------------------------/
 
 # cli: /profile=auth-server-clustered/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=com.oracle, driver-name=oracle)
 # cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=connection-url,value="jdbc:oracle:thin:@(DESCRIPTION =
@@ -44,3 +52,12 @@
 # cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=exception-sorter-class-name,value=org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter)
 # cli: /profile=auth-server-clustered/subsystem=datasources/data-source=KeycloakDS:write-attribute(name=stale-connection-checker-class-name,value=org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker)
 # cli: :reload-servers(blocking=true)
+
+# /--------------------------------------------------------------------------------\
+# | JBOSS EAP LOG HANDLER                                                          |
+# \--------------------------------------------------------------------------------/
+
+# configurar log-handler
+# > /path=custom.log.dir:add(path=/var/log/jboss/) 
+# > /profile=auth-server-clustered/subsystem=logging/periodic-size-rotating-file-handler=PERIODIC_SIZE_ROTATING_SSO:add(append=false,file={relative-to="custom.log.dir",path="sso-server.log"},rotate-size=5000,suffix=".yyyy-MM-dd",autoflush=true,max-backup-index=25,level="INFO",encoding="utf-8",autoflush=true,rotate-on-boot=true)
+# > /profile=auth-server-clustered/subsystem=logging/root-logger=ROOT:add-handler(name=PERIODIC_SIZE_ROTATING_SSO)

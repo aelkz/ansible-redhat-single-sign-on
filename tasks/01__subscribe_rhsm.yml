@@ -1,6 +1,6 @@
 ---
 
-- name: "(01) Subscribe the host to RHSM"
+- name: "(01) subscribe the host to RHSM"
   block:
     - name: Check Pool ID definition
       fail: msg="Extra variable rhn_poolid has not been defined. Please add it before running this playbook"
@@ -16,4 +16,4 @@
     - name: Attach to pool
       command: subscription-manager attach --pool="{{ rhn_poolid }}"
       ignore_errors: yes
-  when: config_rhsm_subscribe_host|bool
+  when: config.install_rhsm|bool

@@ -9,6 +9,7 @@ ansible_roles_path: /etc/ansible/playbooks/roles
 subtasks_directory_path: tasks/subtasks
 binaries_directory_path: files
 
+
 # /--------------------------------------------------------------------------------\
 # | Red Hat Single Sign-On artifact                                                |
 # \--------------------------------------------------------------------------------/
@@ -20,6 +21,7 @@ rhsso_artifact_name: "rh-sso-{{ rhsso_artifact_version }}.zip"
 rhsso_artifact_checksums:
   # https://access.redhat.com/cspdownload/../../rhsso-7.2.0/rh-sso-7.2.0.zip
   '7.2.0': ebfd24b0ad078453ed9168664903662edb3ac64ec8f9407f45c656735faf87c9
+
 
 # /--------------------------------------------------------------------------------\
 # | Red Hat Single Sign-On patches                                                 |
@@ -54,6 +56,7 @@ rhsso_patches:
     filename: 72-5-patch.zip
     sha256checksum: e23add18383d3e1d7f269c991e5401072289756fe3b4ccf1dd1a1b1ef832e751
 
+
 # /--------------------------------------------------------------------------------\
 # | Red Hat Single Sign-On configurations                                          |
 # \--------------------------------------------------------------------------------/
@@ -66,34 +69,23 @@ rhsso_patches:
 # user: sso
 # group: sso
 
-rhsso_install_dir: /usr/share
+general:
+  install_dir: /usr/share
+  home_dir_name: rh-sso-7.2
+  instance_name: rh-sso
+  download_dir: /tmp
 
-rhsso_home_dir_name: rh-sso-7.2
-
-rhsso_instance_name: rh-sso
-
-rhsso_download_dir: /tmp
-
-# Red Hat JBoss EAP administration console user name (:9990)
-rhsso_console_admin_user: jboss
-
-# Red Hat JBoss EAP jgroups cluster user name
-rhsso_jgroups_user: jbservice
-
-# Red Hat Single Sign-On administration console user name (keycloak user)
-rhsso_keycloak_admin_user: admin
-
-# Red Hat JBoss EAP admin password (plain text: it will be encrypted with add-user.sh script)
-rhsso_console_admin_password: jboss@123
-
-rhsso_jgroups_password: jboss@123
-
-rhsso_keycloak_admin_password: admin
-
-rhsso_host_type: master
-
-# System user:group configuration
 jboss:
+  console_admin_user: jboss
+  console_admin_password: jboss@123
+  jgroups_user: jbservice
+  jgroups_password: jboss@123
+  keycloak_user: admin
+  keycloak_password: jboss@123
+  host_type: master
+  domain_master_address: "192.168.10.81"
+
+owner:
   user: sso
   group: sso
   group_id: 500
@@ -102,13 +94,14 @@ jboss:
 # | System configurations                                                          |
 # \--------------------------------------------------------------------------------/
 
-config_install_java: true
-config_rhsm_subscribe_host: true
-config_install_jvm: true
-config_install_oracle_jdbc_driver: true
-config_timezone: "America/Sao_Paulo"
-config_language: pt
-config_country: BR
+config:
+  install_java: true
+  install_rhsm: true
+  install_jdbc_oracle: true
+  timezone_main: "America/Sao_Paulo"
+  timezone_language: pt
+  timezone_country: BR
+
 
 # /--------------------------------------------------------------------------------\
 # | JVM configurations                                                             |
@@ -117,13 +110,14 @@ config_country: BR
 jvm_pkg_name: java-1.8.0-openjdk-devel
 
 # Value for the xms and xmx (both are set equal)
-# 30 GB * 1024 = 30720
+# Example: 30 GB * 1024 = 30720
 jvm_java_opts: ""
-jvm_xmx: "30720M"
-jvm_xms: "30720M"
-compressedClassSpaceSize: "2048M"
-metaspaceSize: "1024M"
-maxMetaspaceSize: "1024M"
+jvm_xmx: "1024M"
+jvm_xms: "1024M"
+compressedClassSpaceSize: "512M"
+metaspaceSize: "256M"
+maxMetaspaceSize: "512M"
+
 
 # /--------------------------------------------------------------------------------\
 # | CLI files used for the JBoss EAP configuration                                 |
