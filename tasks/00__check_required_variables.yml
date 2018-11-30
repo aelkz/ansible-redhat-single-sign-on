@@ -55,10 +55,3 @@
     msg: "This role requires jboss.domain_master_address to be set and non empty because you're installing a host-controller."
   when: (jboss.domain_master_address is not defined or jboss.domain_master_address == '') and jboss.host_type == 'slave'
 
-- name: "(00) fail for missing jboss.domain_master_address"
-  fail:
-    msg: "This role requires jboss.domain_master_address to be set and non empty."
-  when: jboss.domain_master_address is not defined or jboss.domain_master_address == ''
-
-
-

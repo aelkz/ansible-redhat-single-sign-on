@@ -39,7 +39,7 @@
     - "{{ '-XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=' + compressedClassSpaceSize + ' -XX:MetaspaceSize=' + metaspaceSize + ' -XX:MaxMetaspaceSize=' + maxMetaspaceSize }}"
     - "{{ '-Djboss.server.base.dir=' + general.home_dir_name }}"
 
-- name: check to see if pip is already installed
+- name: "(03) check to see if pip is already installed"
   command: "pip --version"
   ignore_errors: true
   register: pip_is_installed
@@ -52,7 +52,7 @@
 # Install pip if it's not already installed, or if
 # the desired versions of pip aren't installed
 # The regular expression extracts '9.0' out of '9.0.*'
-- name: Install pip
+- name: "(03) install pip"
   command: "python get-pip.py"
   when: pip_is_installed.rc != 0
   args:

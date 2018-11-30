@@ -2,6 +2,6 @@
 
 - name: "(08) ensure red hat single sign-on servers are running"
   service:
-    name: "{{ jboss_eap_instance_service_name }}"
+    name: "{{ general.instance_name }}"
     state: started
     enabled: yes

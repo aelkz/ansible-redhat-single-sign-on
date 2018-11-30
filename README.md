@@ -166,7 +166,6 @@ Here is a playbook creating two JBoss EAP instances on every host in "jboss-mast
           keycloak_user: admin
           keycloak_password: jboss@123
           host_type: master
-          domain_master_address: "192.168.10.81"
         config:
           install_java: true
           install_rhsm: true
