@@ -43,9 +43,11 @@ Installation
 
 2. create the file vars/rhn_credentials.yml with the following content of your redhat account. Example:
 
-    rhn_username: us3r
-    rhn_password: p@ss
-    rhn_poolid: a1b2-c3d4-e5f6-g7h8-i9j0k
+```
+rhn_username: us3r
+rhn_password: p@ss
+rhn_poolid: a1b2-c3d4-e5f6-g7h8-i9j0k
+```
 
 3. encrypt the file:
 
