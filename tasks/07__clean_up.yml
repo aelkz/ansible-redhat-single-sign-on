@@ -1,5 +1,9 @@
 ---
 
+# /--------------------------------------------------------------------------------\
+# | remove downloaded files and scripts                                            |
+# \--------------------------------------------------------------------------------/
+
 - name: "delete get-pip.py"
   file: state=absent path=/tmp/get-pip.py
 
@@ -9,3 +13,7 @@
 - name: "remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
   shell: "/usr/sbin/lsof +L1 {{ general.download_dir }} > /dev/null"
   ignore_errors: true
+
+# /--------------------------------------------------------------------------------\
+# | remove server jvm from host-master (recomended)                                |
+# \--------------------------------------------------------------------------------/

@@ -41,6 +41,7 @@
   with_items:
     - {regexp: "^(.*)host xmlns(.*)$", line: "<host name=\"node{{ host_number }}\" xmlns=\"urn:jboss:domain:5.0\">"}
     - {regexp: "^(.*)secret value(.*)$", line: "                    <secret value=\"{{ jboss.jgroups_password | b64encode }}\"/>"}
+    - {regexp: "^(.*)remote username=\"$local\" security-realm=\"ManagementRealm\"(.*)$", line: "        <remote username=\"{{ jboss.jgroups_user }}\" security-realm=\"ManagementRealm\">"}
     - {regexp: "^(.*).master.address:127.0.0.1(.*)$", line: "                <static-discovery name=\"primary\" protocol=\"${jboss.domain.master.protocol:remote}\" host=\"${jboss.domain.master.address:{{ jboss.domain_master_address }}}\" port=\"${jboss.domain.master.port:9999}\"/>"}
     - {regexp: "^(.*)management:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address.management:{{ ansible_default_ipv4.address }}}\"/>"}
     - {regexp: "^(.*)jboss.bind.address:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address:{{ ansible_default_ipv4.address }}}\"/>"}

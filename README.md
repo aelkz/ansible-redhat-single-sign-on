@@ -17,6 +17,8 @@ Core implemented features in this role:
 - configuration of the Red Hat JBoss EAP instances using the CLI
 - cleanup after installation
 
+![patches-applied](files/images/01.png "Patches applied after installation process")
+
 This role is based on:
 
 - https://github.com/Maarc/ansible_middleware_soe showing how to easily operate Red Hat JBoss middleware products using ansible role.

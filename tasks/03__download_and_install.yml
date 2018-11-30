@@ -364,6 +364,28 @@
 
   when: config.install_jdbc_oracle|bool
 
+- firewalld:
+    port: 9990/tcp
+    permanent: true
+    state: enabled
+  when: jboss_eap_host_type == "master"
+
+- firewalld:
+    port: 9999/tcp
+    permanent: true
+    state: enabled
+  when: jboss_eap_host_type == "master"
+  
+- firewalld:
+    port: 8080/tcp
+    permanent: true
+    state: enabled
+
+- firewalld:
+    port: 8443/tcp
+    permanent: true
+    state: enabled
+
 - name: "(03) set subtasks directory path facts"
   set_fact:
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"

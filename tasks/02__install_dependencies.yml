@@ -40,3 +40,8 @@
   action: "{{ ansible_pkg_mgr }} name=lsof state=latest"
   tags:
   - common
+
+- name: "(02) install telnet"
+  action: "{{ ansible_pkg_mgr }} name=telnet state=latest"
+  tags:
+  - common
