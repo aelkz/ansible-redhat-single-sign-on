@@ -7,12 +7,12 @@
   become: true
 
 #### 
-#- include: 01__subscribe_rhsm.yml
-#  become: true
+- include: 01__subscribe_rhsm.yml
+  become: true
 
 #### 
-#- include: 02__install_dependencies.yml
-#  become: true
+- include: 02__install_dependencies.yml
+  become: true
 
 #### 
 - include: 03__download_and_install.yml

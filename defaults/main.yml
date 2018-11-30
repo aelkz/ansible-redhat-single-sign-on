@@ -83,7 +83,7 @@ jboss:
   keycloak_user: admin
   keycloak_password: jboss@123
   host_type: master
-  domain_master_address: "192.168.10.81"
+  domain_master_address: ""
 
 owner:
   user: sso
