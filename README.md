@@ -42,21 +42,21 @@ Installation
 1. create a .vault with your secret.
 
 2. create the file vars/rhn_credentials.yml with the following content of your redhat account. Example:
----
 
-rhn_username: us3r
-rhn_password: p@ss
-rhn_poolid: a1b2-c3d4-e5f6-g7h8-i9j0k
+    rhn_username: us3r
+    rhn_password: p@ss
+    rhn_poolid: a1b2-c3d4-e5f6-g7h8-i9j0k
 
 3. encrypt the file:
-```shell
+
+```
 ansible-vault encrypt vars/rhn_credentials.yml --vault-password-file=.vault
 ```
 
 Execution
 ---------
 
-ansible-playbook playbook.yml -vvv -k --vault-password-file roles/ansible-role-redhat-single-sign-on/.vault --flush-cache
+`ansible-playbook playbook.yml -vvv -k --vault-password-file roles/ansible-role-redhat-single-sign-on/.vault --flush-cache`
 
 Role Variables
 --------------
