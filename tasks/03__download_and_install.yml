@@ -39,41 +39,24 @@
     - "{{ '-XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=' + compressedClassSpaceSize + ' -XX:MetaspaceSize=' + metaspaceSize + ' -XX:MaxMetaspaceSize=' + maxMetaspaceSize }}"
     - "{{ '-Djboss.server.base.dir=' + general.home_dir_name }}"
 
-# JVM
-#- name: "{{ jboss_eap_instance_name }} {{ info }} Update standalone.conf (3/3)"
-#  lineinfile:
-#    dest: "{{ target_dir }}/configuration/standalone.conf"
-#    regexp: "{{ item.regexp }}"
-#    line: "{{ item.line }}"
-#    backrefs: yes
-#  with_items:
-#    # Set JVM Xms
-#    - { regexp: '^(.*)Xms(\d+)m(.*)$', line: "\\1Xms{{ jvm_xm }}m\\3" }
-#    # Set JVM Xmx
-#    - { regexp: '^(.*)Xmx(\d+)m(.*)$', line: "\\1Xmx{{ jvm_xm }}m\\3" }
-#    # Remove JVM MaxPermSize
-#    - { regexp: '^(.*) -XX:MaxPermSize=(\d+)m(.*)$', line: "\\1\\3" }
+- name: check to see if pip is already installed
+  command: "pip --version"
+  ignore_errors: true
+  register: pip_is_installed
+  changed_when: false
 
-#- name: "{{ jboss_eap_instance_name }} {{ info }} Update mgmt-*.properties"
-#  lineinfile:
-#    dest: "{{ item.dest }}"
-#    line: "{{ item.line }}"
-#  with_items:
-#    - { dest: "{{ target_dir }}/configuration/mgmt-users.properties", line: "{{ jboss_eap_instance_admin_user }}={{ jboss_eap_instance_admin_password }}" }
-#    - { dest: "{{ target_dir }}/configuration/mgmt-groups.properties", line: '{{ jboss_eap_instance_admin_user}}={{ jboss_eap_instance_admin_groups }}' }
+- name: "(03) download get-pip.py"
+  get_url: "url=https://bootstrap.pypa.io/get-pip.py dest=/tmp/get-pip.py"
+  when: pip_is_installed.rc != 0
 
-#- name: "{{ jboss_eap_instance_name }} {{ info }} Update permissions"
-#  file: path={{ item }} owner={{ jboss.user }} group={{ jboss.group }} state=directory recurse=yes mode="o-rx"
-#  with_items:
-#    - "{{ jboss_home }}"
-#    - "{{ target_dir }}"
-
-#- name: "{{ jboss_eap_instance_name }} {{ info }} Update ACL"
-#  acl: name={{ target_dir }} etype=other state=present permissions='---' default=true recursive=true
-
-- easy_install:
-    name: pip
-    state: latest
+# Install pip if it's not already installed, or if
+# the desired versions of pip aren't installed
+# The regular expression extracts '9.0' out of '9.0.*'
+- name: Install pip
+  command: "python get-pip.py"
+  when: pip_is_installed.rc != 0
+  args:
+    chdir: /tmp
 
 - pip:
     name: lxml
@@ -111,12 +94,37 @@
   with_items:
     - "{{ owner }}"
 
-# Defensive Programming To Check If EAP Is Already Installed
-- name: "(03) check existence of existing installation"
+- name: "(03) check existence of red hat single sign-on"
   become: true
   stat:
-    path: "{{ jboss_eap_home + '/version.txt'}}"
+    path: "{{ jboss_eap_home }}"
   register: rhsso_installation_exists
+
+- name: "(03) check existence of red hat single sign-on zip file"
+  become: true
+  stat:
+    path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
+  register: rhsso_zip_package_exists
+
+- name: "(03) checksum existing rhsso server zip file"
+  block:
+  - stat:
+      path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
+      checksum_algorithm: sha256
+    register: server
+
+  - name: "(03) remove existing zip corrupted artifact"
+    file: path={{ item }} state=absent
+    with_items:
+      - "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
+    when: server.stat.checksum != jboss_eap_checksum
+  when: rhsso_zip_package_exists.stat.exists
+
+- name: "(03) check existence of red hat single sign-on zip file"
+  become: true
+  stat:
+    path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
+  register: rhsso_zip_package_exists
 
 - name: "(03) async download jboss eap from red hat customer portal"
   redhat_csp_download:
@@ -129,7 +137,7 @@
   register: csp_rhsso_download
   tags:
     - rhsso
-  when: not rhsso_installation_exists.stat.exists
+  when: not rhsso_zip_package_exists.stat.exists
 
 - name: "(03) check on red hat single sign-on {{ rhsso_artifact_version }} download completion"
   async_status: jid={{ csp_rhsso_download.ansible_job_id }}
@@ -139,7 +147,7 @@
   delay: 10
   tags:
     - rhsso
-  when: not rhsso_installation_exists.stat.exists
+  when: not rhsso_zip_package_exists.stat.exists
 
 - name: "(03) checksum rhsso server zip file"
   block:
@@ -151,7 +159,22 @@
   - fail:
       msg: "Failure, downloaded {{ rhsso_artifact_name }} file is corrupted."
     when: server.stat.checksum != jboss_eap_checksum
-  when: not rhsso_installation_exists.stat.exists
+
+- name: "(03) remove existing installation"
+  file: path={{ item }} state=absent
+  with_items:
+    - "{{ jboss_eap_home }}"
+  when: rhsso_installation_exists.stat.exists
+
+- name: "(03) check existence again of red hat single sign-on zip file"
+  become: true
+  stat:
+    path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
+  register: rhsso_zip_package_exists
+
+- fail:
+    msg: "Failure, can't download {{ rhsso_artifact_name }} artifact from rhcsp."
+  when: not rhsso_zip_package_exists.stat.exists
 
 - name: "(03) extract red hat sign-on {{ rhsso_artifact_version }}"
   become: true
@@ -162,9 +185,9 @@
     copy: no
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
-  when: not rhsso_installation_exists.stat.exists
+  when: rhsso_zip_package_exists.stat.exists and server.stat.checksum == jboss_eap_checksum
 
-- name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
+- name: "(03) 1:change permissions on {{ jboss_eap_home }} installation directory"
   file:
     state: directory
     recurse: yes
@@ -223,7 +246,6 @@
     - {regexp: "JBOSS_CONF=", line: "JBOSS_CONF='{{ jboss_eap_runtime_conf_file }}'"}
     - {regexp: "^  JBOSS_NAME", line: "JBOSS_NAME='{{ general.instance_name }}'"}
 
-# http://www.mydailytutorials.com/ansible-lineinfile-module-examples/
 - name: "(03) clear {{ general.instance_name }} jvm JAVA_OPTS"
   lineinfile:
     dest: "{{ jboss_eap_runtime_conf_file }}"
@@ -260,13 +282,6 @@
     path: /etc/security/limits.conf
     line: "{{ owner.user }}              -       nofile         65000"
 
-- name: "(03) remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
-  shell: "/bin/rm -rf {{ general.download_dir }}/{{ rhsso_artifact_name }}"
-
-- name: "(03) remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
-  shell: "/usr/sbin/lsof +L1 {{ general.download_dir }} > /dev/null"
-  ignore_errors: true
-
 # JBoss EAP administration console user
 - name: "(03) check existence of jboss eap administration console user"
   shell: "grep '^{{ jboss.console_admin_user }}' {{ jboss_eap_domain_home }}/mgmt-users.properties"
@@ -283,11 +298,11 @@
     - mgmt-groups.properties
     - mgmt-users.properties
  
-- name: "(03) create {{ jboss.console_admin_user }} jboss eap administration console user"
+- name: "(03) create jboss eap administration console user"
   shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.console_admin_password }} -u {{ jboss.console_admin_user }} -e -s"
   when: admin_user_exists.stdout == ""
 
-- name: "(03) ensure {{ jboss.console_admin_user }} jbss eap administration console user was created"
+- name: "(03) ensure jboss eap administration console user was created"
   lineinfile:
     name: "{{ jboss_eap_domain_home }}/mgmt-users.properties"
     line: "{{ jboss.console_admin_user }}"
@@ -321,34 +336,19 @@
       register: oracle_jdbc_module_cli_result
       when: module_result.stat.exists == false and jdbc_result.stat.exists == false
 
-    - name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
+    - name: "(03) 2:change permissions on {{ jboss_eap_home }} installation directory"
       file:
         state: directory
         recurse: yes
         path: "{{ jboss_eap_home }}"
         owner: "{{ owner.user }}"
         group: "{{ owner.group }}"
-      when: jboss_eap_host_type == "master"
-      notify:
-        - restart-rhsso
 
-    - name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
-      file:
-        state: directory
-        recurse: yes
-        path: "{{ jboss_eap_home }}"
-        owner: "{{ owner.user }}"
-        group: "{{ owner.group }}"
-      when: jboss_eap_host_type == "slave"
-
-    - name: "(03) waiting for red hat single sign-on become available"
-      local_action:
-        module: wait_for
-          timeout=120
-          host={{ ansible_default_ipv4.address }}
-          port=8080
-          delay=5
-          state=started
+    - name: "{{ general.instance_name }} Ensure JBoss EAP is running"
+      service:
+        name: "{{ general.instance_name }}"
+        state: started
+        enabled: yes
       when: jboss_eap_host_type == "master"
 
     - name: "(03) execute cli: install oracle dbms module (jdbc driver)"
@@ -357,6 +357,11 @@
       ignore_errors: yes
       register: oracle_jdbc_driver_cli_result
       when: jboss_eap_host_type == "master"
+
+    - name: "(03) {{ general.instance_name }} reload systemd"
+      command: "systemctl stop {{ general.instance_name }}"
+      when: jboss_eap_host_type == "master"
+
   when: config.install_jdbc_oracle|bool
 
 - name: "(03) set subtasks directory path facts"

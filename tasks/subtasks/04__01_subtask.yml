@@ -40,7 +40,7 @@
   async: 600
   poll: 0
   register: patch_download_request
-  when: patch_exists.stat.exists and (checksum_result.stat.checksum != patch_checksum)
+  when: not patch_exists.stat.exists
 
 - name: "(04) check on red hat single sign-on {{ rhsso_artifact_version }} patch id:{{ obj.value.id }} download thread"
   async_status: jid={{ patch_download_request.ansible_job_id }}
@@ -48,4 +48,4 @@
   until: jobs_result.finished
   retries: 60
   delay: 10
-  when: patch_exists.stat.exists and (checksum_result.stat.checksum != patch_checksum)
+  when: not patch_exists.stat.exists

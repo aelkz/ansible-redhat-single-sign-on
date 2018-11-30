@@ -1,2 +1,11 @@
 ---
 
+- name: "delete get-pip.py"
+  file: state=absent path=/tmp/get-pip.py
+
+- name: "remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
+  shell: "/bin/rm -rf {{ general.download_dir }}/{{ rhsso_artifact_name }}"
+
+- name: "remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
+  shell: "/usr/sbin/lsof +L1 {{ general.download_dir }} > /dev/null"
+  ignore_errors: true

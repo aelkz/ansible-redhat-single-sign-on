@@ -2,18 +2,20 @@
 
 - name: "(01) subscribe the host to RHSM"
   block:
-    - name: Check Pool ID definition
+    - name: "Check Pool ID definition"
       fail: msg="Extra variable rhn_poolid has not been defined. Please add it before running this playbook"
       when: rhn_poolid is not defined
 
-    - name: Subscribe the host
+    # https://docs.ansible.com/ansible/2.5/modules/redhat_subscription_module.html
+    - name: "Subscribe the host"
       redhat_subscription:
         state: present
         username: "{{ rhn_username }}"
         password: "{{ rhn_password }}"
         autosubscribe: true
+        force_register: true
+      ignore_errors: true
 
-    - name: Attach to pool
+    - name: "Attach to pool"
       command: subscription-manager attach --pool="{{ rhn_poolid }}"
-      ignore_errors: yes
   when: config.install_rhsm|bool

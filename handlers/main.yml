@@ -1,7 +1,7 @@
 ---
 
 - name: restart-rhsso
-  service: name={{ general.instance_name }} state=restarted
+  service: name={{ general.instance_name }} state=started
 
 # Sanity test if everything was setup right and RHSSO is running
 - name: verify-rhsso-is-running

@@ -23,8 +23,8 @@
   become: true
 
 #### 
-#- include: 05__apply_patches.yml
-#  become: true
+- include: 05__apply_patches.yml
+  become: true
 
 #### 
 #- include: 06__execute_cli_files.yml
@@ -41,3 +41,4 @@
 # https://access.redhat.com/solutions/3092881
 # https://stackoverflow.com/questions/42867840/extract-last-two-number-of-ip-in-ansible
 # https://opensource.com/article/18/3/ansible-patch-systems
+# http://www.mydailytutorials.com/ansible-lineinfile-module-examples/

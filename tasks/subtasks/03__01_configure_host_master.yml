@@ -59,10 +59,12 @@
 # JBoss EAP jgroups cluster user
 - name: "(03 subtask 01) check existence of jboss eap jgroups cluster user"
   shell: "grep '^{{ jboss.jgroups_user }}' {{ jboss_eap_domain_home }}/mgmt-users.properties"
+  ignore_errors: yes
   register: cluster_user_exists
 
 - name: "(03 subtask 01) create {{ jboss.jgroups_user }} jboss eap jgroups cluster user"
   shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.jgroups_password }} -u {{ jboss.jgroups_user }} -e -s"
+  ignore_errors: yes
   when: cluster_user_exists.stdout == ""
 
 - name: "(03 subtask 01) ensure {{ jboss.jgroups_user }} jboss eap jgroups cluster user was created"
@@ -77,6 +79,7 @@
 # Red Hat Single Sign-On administration console user
 - name: "(03 subtask 01) check existence of red hat single sign-on administration console user"
   shell: "grep '^    \"username\" : \"{{ jboss.keycloak_user }}\"' {{ jboss_eap_domain_home }}/keycloak-add-user.json"
+  ignore_errors: yes
   register: keycloak_exists
 
 - name: "(03 subtask 01) create {{ jboss.keycloak_user }} red hat single sign-on administration console user"
@@ -85,6 +88,7 @@
 
 - name: "(03 subtask 01) ensure {{ jboss.keycloak_user }} red hat single sign-on administration console user was created"
   shell: "grep '^    \"username\" : \"{{ jboss.keycloak_user }}\"' {{ jboss_eap_domain_home }}/keycloak-add-user.json"
+  ignore_errors: yes
   register: keycloak_admin_user
   failed_when: keycloak_admin_user.stdout == ""
 
