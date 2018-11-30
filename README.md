@@ -9,12 +9,12 @@ Advanced Ansible role that manages [Red Hat Single Sign-On](https://access.redha
 
 Core implemented features in this role:
 
+- dependencies installation
+- red hat subscription manager
 - multiple parallel versions and profile support
-- multiple Red Hat JBoss EAP instances per host
-- graceful orchestration and shutdown (prerequisite for rolling updates)
-- configuration of the Red Hat JBoss EAP instances using the CLI
 - download and patches apply
 - jvm configuration
+- configuration of the Red Hat JBoss EAP instances using the CLI
 - cleanup after installation
 
 This role is based on:
@@ -135,22 +135,6 @@ Role Variables
 | `compressedClassSpaceSize` | `512M` | -XX:CompressedClassSpaceSize |
 | `metaspaceSize` | `256M` | -XX:MetaspaceSize |
 | `maxMetaspaceSize` | `512M` | -XX:MaxMetaspaceSize |
-
-
-*Instance specific variables*
-
-| Name              | Default Value       | Description          |
-|-------------------|---------------------|----------------------|
-| `jboss_eap_instance_name` | `default` | Name of the separate running Red Hat JBoss EAP instance. Mandatory |
-| `jboss_eap_instance_admin_user` | `redhat` | Red Hat JBoss EAP admin user name. Mandatory |
-| `jboss_eap_instance_admin_password` | `ba2caa9378fa898f1dea88804abe52b4` | Red Hat JBoss EAP admin password ("redhat123!") hashed according to HEX( MD5( username ':' realm ':' password)). Mandatory |
-| `jboss_eap_instance_admin_groups` | empty | Red Hat JBoss EAP admin user groups |
-| `jboss_eap_golden_image_name` | empty | Name of the used Red Hat JBoss EAP golden image. Mandatory |
-| `jvm_xm` | `512` | Value for the xms and xmx (both are set equal) in MB  |
-| `jboss_eap_instance_port_offset` | `0` | Port offset for the JBoss EAP instance  |
-| `jboss_eap_instance_cli_used_default_port` | `9999` | Default port for the native management interface |
-| `jboss_eap_instance_cli_default_port` | `8888` | Port used only during updates using the CLI (port should be available) |
-| `jboss_eap_instance_standalone_file` | `standalone.xml` | Name of the used standalone XML file |
 
 
 *Usage of CLI files for the JBoss EAP configuration*
