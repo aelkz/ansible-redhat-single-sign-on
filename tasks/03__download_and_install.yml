@@ -336,6 +336,7 @@
       wait_for:
         path: "{{ jboss_eap_log_file }}"
         search_regex: "started in"
+      when: jboss_eap_host_type == "master"
 
     - name: "(03) execute cli: install oracle dbms module (jdbc driver)"
       become_user: "{{ owner.user }}"
