@@ -187,7 +187,7 @@
     group: "{{ owner.group }}"
   when: rhsso_zip_package_exists.stat.exists and server.stat.checksum == jboss_eap_checksum
 
-- name: "(03) 1:change permissions on {{ jboss_eap_home }} installation directory"
+- name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
   file:
     state: directory
     recurse: yes
@@ -282,13 +282,7 @@
     path: /etc/security/limits.conf
     line: "{{ owner.user }}              -       nofile         65000"
 
-# JBoss EAP administration console user
-- name: "(03) check existence of jboss eap administration console user"
-  shell: "grep '^{{ jboss.console_admin_user }}' {{ jboss_eap_domain_home }}/mgmt-users.properties"
-  ignore_errors: true
-  register: admin_user_exists
-
-- name: "(03) Enforce secure permissions on password files"
+- name: "(03) enforce secure permissions on password files"
   file:
     path: "{{ jboss_eap_domain_home }}/{{ item }}"
     owner: "{{ owner.user }}"
@@ -300,7 +294,6 @@
  
 - name: "(03) create jboss eap administration console user"
   shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.console_admin_password }} -u {{ jboss.console_admin_user }} -e -s"
-  when: admin_user_exists.stdout == ""
 
 - name: "(03) ensure jboss eap administration console user was created"
   lineinfile:
@@ -317,26 +310,14 @@
         src: "{{ binaries_directory_path }}/ojdbc8.jar"
         dest: "{{ general.download_dir }}/ojdbc8.jar"
 
-    - name: "(03) check if jdbc driver: module.xml file already exists"
-      stat:
-        path: "{{ jboss_eap_home }}/modules/com/oracle/main/module.xml"
-      register: module_result
-
-    - name: "(03) check if jdbc driver: ojdbc8.jar file already exists"
-      stat:
-        path: "{{ jboss_eap_home }}/modules/com/oracle/main/ojdbc8.jar"
-      register: jdbc_result
-
     # this will translate to something like:
     # bash -c 'nohup /usr/share/rh-sso-7.2/bin/jboss-cli.sh --command="module add --name=com.oracle --resources=/tmp/ojdbc8.jar --dependencies=javax.api,javax.transaction.api" && pkill -TERM -f "^java(.*)/usr/share/rh-sso-7.2"'
     - name: "(03) execute cli: install oracle dbms module (jdbc driver)"
       become_user: "{{ owner.user }}"
       shell: "bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --command=\"module add --name=com.oracle --resources={{ general.download_dir }}/ojdbc8.jar --dependencies=javax.api,javax.transaction.api\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'"
       ignore_errors: yes
-      register: oracle_jdbc_module_cli_result
-      when: module_result.stat.exists == false and jdbc_result.stat.exists == false
 
-    - name: "(03) 2:change permissions on {{ jboss_eap_home }} installation directory"
+    - name: "(03) change permissions on {{ jboss_eap_home }} installation directory"
       file:
         state: directory
         recurse: yes
@@ -344,16 +325,21 @@
         owner: "{{ owner.user }}"
         group: "{{ owner.group }}"
 
-    - name: "{{ general.instance_name }} Ensure JBoss EAP is running"
+    - name: "(03) ensure jboss eap is running"
       service:
         name: "{{ general.instance_name }}"
         state: started
         enabled: yes
       when: jboss_eap_host_type == "master"
 
+    - name: "wait until the string 'started in' is in the file {{ jboss_eap_log_file }} before continuing"
+      wait_for:
+        path: "{{ jboss_eap_log_file }}"
+        search_regex: "started in"
+
     - name: "(03) execute cli: install oracle dbms module (jdbc driver)"
       become_user: "{{ owner.user }}"
-      shell: "bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --connect --controller={{ ansible_default_ipv4.address }}:9990 --command=\"/profile=auth-server-clustered/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=com.oracle, driver-name=oracle)\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'"
+      shell: "bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --connect --controller=127.0.0.1:9990 --command=\"/profile=auth-server-clustered/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=com.oracle, driver-name=oracle)\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'"
       ignore_errors: yes
       register: oracle_jdbc_driver_cli_result
       when: jboss_eap_host_type == "master"
@@ -363,28 +349,6 @@
       when: jboss_eap_host_type == "master"
 
   when: config.install_jdbc_oracle|bool
-
-- firewalld:
-    port: 9990/tcp
-    permanent: true
-    state: enabled
-  when: jboss_eap_host_type == "master"
-
-- firewalld:
-    port: 9999/tcp
-    permanent: true
-    state: enabled
-  when: jboss_eap_host_type == "master"
-  
-- firewalld:
-    port: 8080/tcp
-    permanent: true
-    state: enabled
-
-- firewalld:
-    port: 8443/tcp
-    permanent: true
-    state: enabled
 
 - name: "(03) set subtasks directory path facts"
   set_fact:

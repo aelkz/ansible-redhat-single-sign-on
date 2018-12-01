@@ -21,27 +21,46 @@
   tags:
   - common
 
-- name: "(02) install unzip"
-  action: "{{ ansible_pkg_mgr }} name=unzip state=latest"
+- name: "(02) install packages"
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=latest"
+  with_items:
+    - unzip
+    - nmap
+    - git
+    - lsof
+    - telnet
+    - bash-completion
+    - bash-completion-extras
+    - vim
   tags:
   - common
+ 
+- name: "(02) upgrade all packages"
+  yum:
+    name: '*'
+    state: latest
 
-- name: "(02) install nmap"
-  action: "{{ ansible_pkg_mgr }} name=nmap state=latest"
-  tags:
-  - common
+- firewalld:
+    port: 9990/tcp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "master"
 
-- name: "(02) install git"
-  action: "{{ ansible_pkg_mgr }} name=git state=latest"
-  tags:
-  - common
+- firewalld:
+    port: 9999/tcp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "master"
+  
+- firewalld:
+    port: 8080/tcp
+    permanent: true
+    state: enabled
 
-- name: "(02) install lsof"
-  action: "{{ ansible_pkg_mgr }} name=lsof state=latest"
-  tags:
-  - common
+- firewalld:
+    port: 8443/tcp
+    permanent: true
+    state: enabled
 
-- name: "(02) install telnet"
-  action: "{{ ansible_pkg_mgr }} name=telnet state=latest"
-  tags:
-  - common
+- name: "(02) bounce firewalld"
+  service: name=firewalld state=restarted

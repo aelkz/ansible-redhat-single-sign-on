@@ -2,27 +2,21 @@
 
 - include_vars: rhn_credentials.yml
 
-#### 
 - include: 00__check_required_variables.yml
   become: true
 
-#### 
 - include: 01__subscribe_rhsm.yml
   become: true
 
-#### 
 - include: 02__install_dependencies.yml
   become: true
 
-#### 
 - include: 03__download_and_install.yml
   become: true
 
-#### 
 - include: 04__download_patches_and_checksum.yml
   become: true
 
-#### 
 - include: 05__apply_patches.yml
   become: true
 
@@ -34,9 +28,8 @@
 #- include: 07__clean_up.yml
 #  become: true
 
-#### 
-#- include: 08__start_servers.yml
-#  become: true
+- include: 08__start_servers.yml
+  become: true
 
 # https://access.redhat.com/solutions/3092881
 # https://stackoverflow.com/questions/42867840/extract-last-two-number-of-ip-in-ansible
