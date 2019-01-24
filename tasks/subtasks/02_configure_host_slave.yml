@@ -47,6 +47,15 @@
     - {regexp: "^(.*)jboss.bind.address:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address:{{ ansible_default_ipv4.address }}}\"/>"}
     - {regexp: "^(.*)server name(.*)$", line: "        <server name=\"server-two\" group=\"auth-server-group\" auto-start=\"true\">"}
 
+- name: "(03 subtask 01) add private interface for use with jgroups subsystem"
+  blockinfile:
+    path: "{{ jboss_eap_domain_xml_file }}"
+    insertbefore: "</interfaces>"    
+    block: |
+        <interface name="private">
+            <inet-address value="${jboss.bind.address:{{ ansible_default_ipv4.address }}}"/>
+        </interface>
+
 - name: "(03 subtask 02) clear {{ jboss_eap_host_slave_xml_file }} file"
   lineinfile:
     dest: "{{ jboss_eap_host_slave_xml_file }}"

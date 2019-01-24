@@ -28,7 +28,7 @@ rhsso_artifact_checksums:
 # \--------------------------------------------------------------------------------/
 
 rhsso_apply_patches: true
-rhsso_remove_patches_after_install: true
+rhsso_remove_patches_after_install: false
 
 rhsso_patches:
   patch_1:

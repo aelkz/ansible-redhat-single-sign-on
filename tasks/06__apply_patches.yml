@@ -1,6 +1,6 @@
 ---
 
-- name: "(05) apply red hat single sign-on patches"
+- name: "(06) apply red hat single sign-on patches"
   include: "{{ subtasks_path }}/05_apply_patches.yml patch={{ item }}"
   with_dict: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool

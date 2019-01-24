@@ -1,6 +1,6 @@
 ---
 
-- name: "(08) ensure red hat single sign-on servers are running"
+- name: "(09) ensure red hat single sign-on servers are running"
   service:
     name: "{{ general.instance_name }}"
     state: started

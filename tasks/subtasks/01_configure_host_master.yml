@@ -78,7 +78,7 @@
 - name: "(03 subtask 01) infinispan - change cache max-entries:keys"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
-    regexp: "(^\\s*)(<local-cache name=\"keys\">$)(\\s*)(<eviction\\s*.*/>)(\\s*)(<expiration\\s*.*/>)"
+    regexp: "(^\\s*)(<local-cache name=\"keys\">$)(\\s*)(<eviction\\s*.*/>)(\\s*)(<expiration.*/>\\.*\\s*)(</local-cache>)"
     replace: "                    <local-cache name=\"keys\">\n                        <eviction max-entries=\"{{ infinispan.cache_authorization_max_entries }}\" strategy=\"LRU\"/>\n                        <expiration max-idle=\"3600000\"/>\n                    </local-cache>"
 
 - name: "(03 subtask 01) infinispan - change cache max-entries and owners:actionTokens"

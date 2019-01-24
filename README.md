@@ -92,7 +92,7 @@ Role Variables
 | Name              | Default Value       | Description          |
 |-------------------|---------------------|----------------------|
 | `rhsso_apply_patches` | `true` | Conditional for installing red hat single sign-on patches |
-| `rhsso_remove_patches_after_install` | `true` | Conditional for removing red hat single sign-on patches (after installation) |
+| `rhsso_remove_patches_after_install` | `false` | Conditional for removing red hat single sign-on patches (after installation) |
 | `rhsso_patches` | `Object.array(id, url, filename, sha256checksum)` | Dict [id, url, filename, sha256checksum] of red hat single sign-on patches releases |
 
 
@@ -140,6 +140,23 @@ Role Variables
 | `compressedClassSpaceSize` | `512M` | -XX:CompressedClassSpaceSize |
 | `metaspaceSize` | `256M` | -XX:MetaspaceSize |
 | `maxMetaspaceSize` | `512M` | -XX:MaxMetaspaceSize |
+
+*Infinispan configurations*
+
+| Name              | Default Value       | Description          |
+|-------------------|---------------------|----------------------|
+| `owners_sessions` | `1` | Total amount of owners of sessions cache |
+| `owners_authenticationsessions` | `1` | Total amount of owners of authenticationSessions cache |
+| `owners_offlinesessions` | `1` | Total amount of owners of offlineSessions cache |
+| `owners_clientsessions` | `1` | Total amount of owners of clientSessions cache |
+| `owners_offlineclientsessions` | `1` | Total amount of owners of offlineClientSessions cache |
+| `owners_loginfailures` | `1` | Total amount of owners of loginFailures cache |
+| `owners_actiontokens` | `2` | Total amount of owners of actionTokens cache |
+| `cache_realms_max_entries` | `10000` | Total max-entries of realms cache |
+| `cache_users_max_entries` | `10000` | Total max-entries of users cache |
+| `cache_authorization_max_entries` | `10000` | Total max-entries of authorization cache |
+| `cache_keys_max_entries` | `1000` | Total max-entries of keys cache |
+| `cache_actiontokens_max_entries` | `-1` | Total max-entries of actionTokens cache |
 
 
 *Usage of CLI files for the JBoss EAP configuration*
