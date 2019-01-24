@@ -9,11 +9,13 @@
 
 - name: "remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
   shell: "/bin/rm -rf {{ general.download_dir }}/{{ rhsso_artifact_name }}"
+  when: rhsso_remove_patches_after_install|bool
 
-- name: "remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
+- name: "trunk and flush download dir folder (free up space from /tmp)"
   shell: "/usr/sbin/lsof +L1 {{ general.download_dir }} > /dev/null"
   ignore_errors: true
-
+  when: rhsso_remove_patches_after_install|bool
+  
 # /--------------------------------------------------------------------------------\
 # | remove server jvm from host-master (recomended)                                |
 # \--------------------------------------------------------------------------------/

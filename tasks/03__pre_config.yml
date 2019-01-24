@@ -1,0 +1,69 @@
+---
+
+# for udp multicast and service management, all the following ports must be opened:
+# 8080/tcp 8443/tcp 9990/tcp 9999/tcp 45700/udp 55200/udp 45688/udp 23364/udp 7600/tcp
+# in case you need static-discovery based on TCPPING, you'll need to open additional ports.
+
+- name: "(02) firewalld 9990/tcp"
+  firewalld:
+    port: 9990/tcp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "master"
+
+- name: "(02) firewalld 9999/tcp"
+  firewalld:
+    port: 9999/tcp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "master"
+
+- name: "(02) firewalld 8080/tcp"
+  firewalld:
+    port: 8080/tcp
+    permanent: true
+    state: enabled
+
+- name: "(02) firewalld 8443/tcp"
+  firewalld:
+    port: 8443/tcp
+    permanent: true
+    state: enabled
+
+- name: "(02) firewalld 45700/udp"
+  firewalld:
+    port: 45700/udp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "slave"
+
+- name: "(02) firewalld 55200/udp"
+  firewalld:
+    port: 55200/udp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "slave"
+
+- name: "(02) firewalld 45688/udp"
+  firewalld:
+    port: 45688/udp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "slave"
+
+- name: "(02) firewalld 23364/udp"
+  firewalld:
+    port: 23364/udp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "slave"
+
+- name: "(02) firewalld 7600/tcp"
+  firewalld:
+    port: 7600/tcp
+    permanent: true
+    state: enabled
+  when: jboss.host_type == "slave"
+
+- name: "(02) bounce firewalld"
+  service: name=firewalld state=restarted

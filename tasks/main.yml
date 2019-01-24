@@ -1,37 +1,49 @@
 ---
 
-- include_vars: rhn_credentials.yml
-
-- include: 00__check_required_variables.yml
-  become: true
-
-- include: 01__subscribe_rhsm.yml
-  become: true
-
-- include: 02__install_dependencies.yml
-  become: true
-
-- include: 03__download_and_install.yml
-  become: true
-
-- include: 04__download_patches_and_checksum.yml
-  become: true
-
-- include: 05__apply_patches.yml
-  become: true
-
-#### 
-#- include: 06__execute_cli_files.yml
-#  become: true
-
-#### 
-#- include: 07__clean_up.yml
-#  become: true
-
-- include: 08__start_servers.yml
-  become: true
-
+# Additional References
 # https://access.redhat.com/solutions/3092881
 # https://stackoverflow.com/questions/42867840/extract-last-two-number-of-ip-in-ansible
 # https://opensource.com/article/18/3/ansible-patch-systems
 # http://www.mydailytutorials.com/ansible-lineinfile-module-examples/
+
+- include_vars: rhn_credentials.yml
+
+- name: "00-CHECK REQUIRED VARIABLES"
+  include: 00__check_required_variables.yml
+  become: true
+
+#- name: "01-SUBSCRIBE TO RHSM"
+#  include: 01__subscribe_rhsm.yml
+#  become: true
+
+#- name: "02-INSTALL DEPENDENCIES"
+#  include: 02__install_dependencies.yml
+#  become: true
+
+- name: "03-PRE CONFIG"
+  include: 03__pre_config.yml
+  become: true
+
+- name: "04-DOWNLOAD AND INSTALL"
+  include: 04__download_and_install.yml
+  become: true
+
+- name: "05-DOWNLOAD PATCHES AND CHECKSUM"
+  include: 05__download_patches_and_checksum.yml
+  become: true
+
+- name: "06-APPLY PATCHES"
+  include: 06__apply_patches.yml
+  become: true
+
+# - name: "07-EXECUTE ADDITIONAL CLI FILES"
+#   include: 07__execute_cli_files.yml
+#   become: true
+
+- name: "08-CLEAN UP INSTALLATION"
+  include: 08__clean_up.yml
+  become: true
+
+- name: "09-START SERVERS"
+  include: 09__start_servers.yml
+  become: true

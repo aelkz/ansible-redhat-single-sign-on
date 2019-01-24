@@ -40,6 +40,7 @@
   async: 600
   poll: 0
   register: patch_download_request
+  no_log: true
   when: not patch_exists.stat.exists
 
 - name: "(04) check on red hat single sign-on {{ rhsso_artifact_version }} patch id:{{ obj.value.id }} download thread"

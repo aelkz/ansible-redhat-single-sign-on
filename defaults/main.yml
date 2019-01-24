@@ -28,6 +28,7 @@ rhsso_artifact_checksums:
 # \--------------------------------------------------------------------------------/
 
 rhsso_apply_patches: true
+rhsso_remove_patches_after_install: true
 
 rhsso_patches:
   patch_1:
@@ -118,6 +119,23 @@ compressedClassSpaceSize: "512M"
 metaspaceSize: "256M"
 maxMetaspaceSize: "512M"
 
+# /--------------------------------------------------------------------------------\
+# | Infinispan subsystem configurations                                            |
+# \--------------------------------------------------------------------------------/
+
+infinispan:
+  owners_sessions: 1
+  owners_authenticationsessions: 1
+  owners_offlinesessions: 1
+  owners_clientsessions: 1
+  owners_offlineclientsessions: 1
+  owners_loginfailures: 1
+  owners_actiontokens: 2
+  cache_realms_max_entries: 10000
+  cache_users_max_entries: 10000
+  cache_authorization_max_entries: 10000
+  cache_keys_max_entries: 1000
+  cache_actiontokens_max_entries: -1
 
 # /--------------------------------------------------------------------------------\
 # | CLI files used for the JBoss EAP configuration                                 |

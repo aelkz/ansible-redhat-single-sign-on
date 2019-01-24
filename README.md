@@ -62,6 +62,8 @@ Execution
 
 `ansible-playbook playbook.yml -vvv -k --vault-password-file roles/ansible-role-redhat-single-sign-on/.vault --flush-cache`
 
+PS. add `--connection=local` if you're running into the same host.
+
 Role Variables
 --------------
 
@@ -90,6 +92,7 @@ Role Variables
 | Name              | Default Value       | Description          |
 |-------------------|---------------------|----------------------|
 | `rhsso_apply_patches` | `true` | Conditional for installing red hat single sign-on patches |
+| `rhsso_remove_patches_after_install` | `true` | Conditional for removing red hat single sign-on patches (after installation) |
 | `rhsso_patches` | `Object.array(id, url, filename, sha256checksum)` | Dict [id, url, filename, sha256checksum] of red hat single sign-on patches releases |
 
 
@@ -160,6 +163,7 @@ Here is a playbook creating two JBoss EAP instances on every host in "jboss-mast
         role_id: ansible-role-redhat-single-sign-on
         ansible_roles_path: /etc/ansible/playbooks/roles
         rhsso_apply_patches: true
+        rhsso_remove_patches_after_install: false
         jboss:
           console_admin_user: jboss
           console_admin_password: jboss@123
@@ -190,6 +194,7 @@ Here is a playbook creating two JBoss EAP instances on every host in "jboss-mast
         role_id: ansible-role-redhat-single-sign-on
         ansible_roles_path: /etc/ansible/playbooks/roles
         rhsso_apply_patches: true
+        rhsso_remove_patches_after_install: false
         jboss:
           console_admin_user: jboss
           console_admin_password: jboss@123

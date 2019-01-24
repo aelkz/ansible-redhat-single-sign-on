@@ -9,11 +9,11 @@
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
 - name: "(04) check and download red hat single sign-on patches"
-  include: "{{ subtasks_path }}/04__01_subtask.yml patch={{ item }}"
+  include: "{{ subtasks_path }}/03_check_and_download_patches.yml patch={{ item }}"
   with_dict: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool
 
 - name: "(04) checksum downloaded red hat single sign-on patches"
-  include: "{{ subtasks_path }}/04__02_subtask.yml patch={{ item }}"
+  include: "{{ subtasks_path }}/04_checksum_patches.yml patch={{ item }}"
   with_dict: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool

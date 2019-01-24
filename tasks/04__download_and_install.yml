@@ -58,10 +58,12 @@
   args:
     chdir: /tmp
 
-- pip:
+- name: "(03) install pip module: lxml"
+  pip:
     name: lxml
 
-- pip:
+- name: "(03) install pip module: requests"
+  pip:
     name: requests
 
 - name: "(03) create group for red hat single sign-On"
@@ -135,6 +137,7 @@
   async: 7200
   poll: 0
   register: csp_rhsso_download
+  no_log: true
   tags:
     - rhsso
   when: not rhsso_zip_package_exists.stat.exists
@@ -356,9 +359,9 @@
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
 - name: "(03) check and install host-master node"
-  include: "{{ subtasks_path }}/03__01_configure_host_master.yml"
+  include: "{{ subtasks_path }}/01_configure_host_master.yml"
   when: jboss_eap_host_type == "master"
 
 - name: "(03) check and install host-slave node"
-  include: "{{ subtasks_path }}/03__02_configure_host_slave.yml"
+  include: "{{ subtasks_path }}/02_configure_host_slave.yml"
   when: jboss_eap_host_type == "slave"

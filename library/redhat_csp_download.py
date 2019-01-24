@@ -21,7 +21,6 @@ DOCUMENTATION = '''
 ---
 module: redhat_csp_download
 author: "Andrew Block <andy.block@gmail.com>"
-source: https://github.com/sabre1041/redhat-csp-download
 version_added: "0.1"
 short_description: Downloads resources from the Red Hat customer portal.
 description:
@@ -69,35 +68,22 @@ def get_csp_file(module,username,password,url,dest):
 
     # Parse initial response
     root = lxml.html.fromstring(r.text)
-    samlrequest = root.xpath('//input[@name="SAMLRequest"]')[0].value
-    post_url = root.xpath('//form[@method="POST"]')[0].action
 
-    data = {'SAMLRequest': samlrequest, 'username': username, 'password': password}
-    r = session.post(post_url, data=data)
-
-    root = lxml.html.fromstring(r.text)
     post_url = root.xpath('//form[@method="post"]')[0].action
 
-    r = session.post(post_url, data=data)
-
-    root = lxml.html.fromstring(r.text)
-
-    # Validate Authentication with SAMLResponse
-    samlresponse = root.xpath('//input[@name="SAMLResponse"]')
-
-    if not samlresponse:
-        module.fail_json(msg="Invalid credentials")
-
-    samlresponse = samlresponse[0].value
-
-    post_url = root.xpath('//form[@method="POST"]')[0].action
-    data = {'SAMLResponse': samlresponse, 'username': username, 'password': password}
+    data = {'username': username, 'password': password}
 
     # Final Post to download file
     r = session.post(post_url, data=data)
-    # Download file
-    with open(dest, "wb") as code:
-        code.write(r.content)
+
+    # Check if html page is returned indicating failure
+    if 'html' not in r.headers['Content-Type']:
+
+        # Download file
+        with open(dest, "wb") as code:
+            code.write(r.content)
+    else:
+        module.fail_json(msg="An error occurred retrieving content")
 
     # Close session
     session.close()

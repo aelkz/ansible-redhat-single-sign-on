@@ -12,7 +12,7 @@ galaxy_info:
     - 7
   - name: Fedora
     versions:
-    - 25    
+    - 25
   galaxy_tags:
   - development
   - java
@@ -21,9 +21,6 @@ galaxy_info:
   - keycloak
   - security
 
-# Several Red Hat JBoss EAP server instances could be setup on the same host (cf. https://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse)
+# Several Red Hat JBoss EAP server instances could be setup on the same host
+# (cf. https://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse)
 allow_duplicates: no
-
-# Empty as otherwise the Galaxy import does not work as expected.
-# dependencies:
-#  - role: xxxxx
