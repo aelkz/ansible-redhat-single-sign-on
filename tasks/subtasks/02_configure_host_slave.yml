@@ -1,36 +1,36 @@
 ---
 
-- name: "(03 subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
+- name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
   set_fact:
     ip: "{{ ansible_default_ipv4.address }}"
 
 # acquire the last 3 digits of the ip address of host (for naming purposes only).
-- name: "(03 subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
+- name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
   set_fact:
     host_number: "{{ ip.split('.')[-1][-3:] }}"
 
-- name: "(03 subtask 02) show host number"
+- name: "(subtask 02) show host number"
   debug: msg={{ host_number }}
 
-- name: "(03 subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
+- name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
 
-- name: "(03 subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
+- name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
 
-- name: "(03 subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
+- name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
   set_fact:
     jboss_eap_domain_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/configuration"
 
-- name: "(03 subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
+- name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
   set_fact:
     jboss_eap_domain_xml_file: "{{ jboss_eap_domain_home }}/domain.xml"
     jboss_eap_host_slave_xml_file: "{{ jboss_eap_domain_home }}/host-slave.xml"
     oracle_jdbc_driver: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
-- name: "(03 subtask 02) configure red hat single sign-on host-slave"
+- name: "(subtask 02) configure red hat single sign-on host-slave"
   lineinfile:
     state: present
     path: "{{ jboss_eap_host_slave_xml_file }}"
@@ -56,7 +56,7 @@
             <inet-address value="${jboss.bind.address:{{ ansible_default_ipv4.address }}}"/>
         </interface>
 
-- name: "(03 subtask 02) clear {{ jboss_eap_host_slave_xml_file }} file"
+- name: "(subtask 02) clear {{ jboss_eap_host_slave_xml_file }} file"
   lineinfile:
     dest: "{{ jboss_eap_host_slave_xml_file }}"
     regexp: "^(.*)<socket-bindings port-offset=\"250\"/>"

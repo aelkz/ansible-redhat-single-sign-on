@@ -3,22 +3,22 @@
 - set_fact:
     obj: "{{ item }}"
 
-- name: "(05 subtask 01) set red hat single sign on service directories facts"
+- name: "(subtask 05) set red hat single sign on service directories facts"
   set_fact:
     jboss_eap_home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
 
-- name: "(05 subtask 01) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
+- name: "(subtask 05) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
     jboss_eap_domain_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/configuration"
     version: "{{ obj.value.id }}"
 
-- name: "(05 subtask 01) check applied patches"
+- name: "(subtask 05) check applied patches"
   command: "{{ jboss_eap_bin_dir }}/jboss-cli.sh 'patch history'"
   register: result
   changed_when: "False"
 
-- name: "(05 subtask 01) applying red hat single sign-on patch id:{{ obj.value.id }}"
+- name: "(subtask 05) applying red hat single sign-on patch id:{{ obj.value.id }}"
   become_user: "{{ owner.user }}"
   command: "{{ jboss_eap_bin_dir }}/jboss-cli.sh 'patch apply {{ general.download_dir }}/{{ obj.value.filename }} --verbose --override-all'"
   when: "version not in result.stdout"
