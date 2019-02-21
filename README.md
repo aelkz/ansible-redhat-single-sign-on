@@ -236,6 +236,28 @@ Here is a playbook creating two JBoss EAP instances on every host in "jboss-mast
       roles:
         - { role: ansible-role-redhat-single-sign-on }
 
+PS. If your're in OSX, you maybe need to create the default installation structure at:
+```
+$ brew install ansible
+
+mkdir /usr/local/etc/ansible
+mkdir /usr/local/etc/ansible/playbooks
+mkdir /usr/local/etc/ansible/roles
+
+touch /usr/local/etc/ansible/ansible.cfg
+touch /usr/local/etc/ansible/hosts
+```
+
+change `ansible.cfg` defaults:
+
+```
+[defaults]
+inventory      = /usr/local/etc/ansible/hosts
+```
+
+You can download an configuration example here:<br>
+https://raw.githubusercontent.com/ansible/ansible/devel/examples/ansible.cfg
+
 Structure
 ---------
 
