@@ -12,13 +12,13 @@
   include: 00__check_required_variables.yml
   become: true
 
-#- name: "01-SUBSCRIBE TO RHSM"
-#  include: 01__subscribe_rhsm.yml
-#  become: true
+- name: "01-SUBSCRIBE TO RHSM"
+  include: 01__subscribe_rhsm.yml
+  become: true
 
-#- name: "02-INSTALL DEPENDENCIES"
-#  include: 02__install_dependencies.yml
-#  become: true
+- name: "02-INSTALL DEPENDENCIES"
+  include: 02__install_dependencies.yml
+  become: true
 
 - name: "03-PRE CONFIG"
   include: 03__pre_config.yml
