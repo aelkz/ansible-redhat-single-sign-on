@@ -54,13 +54,13 @@ rhn_poolid: a1b2-c3d4-e5f6-g7h8-i9j0k
 3. encrypt the file:
 
 ```
-ansible-vault encrypt vars/rhn_credentials.yml --vault-password-file=.vault
+ansible-vault encrypt /etc/ansible/roles/ansible-redhat-single-sign-on/vars/rhn_credentials.yml --vault-password-file=/etc/ansible/roles/ansible-redhat-single-sign-on/.vault
 ```
 
 Execution
 ---------
 
-`ansible-playbook playbook.yml -vvv -k --vault-password-file roles/ansible-role-redhat-single-sign-on/.vault --flush-cache`
+`ansible-playbook playbook.yml -vvv -k --vault-password-file /etc/ansible/roles/ansible-redhat-single-sign-on/.vault --flush-cache`
 
 PS. add `--connection=local` if you're running into the same host.
 
@@ -71,7 +71,7 @@ Role Variables
 
 | Name              | Default Value       | Description          |
 |-------------------|---------------------|----------------------|
-| `role_id` | `ansible-role-redhat-single-sign-on` | Name of the role after download |
+| `role_id` | `ansible-redhat-single-sign-on` | Name of the role after download |
 | `ansible_roles_path` | `/etc/ansible/playbooks/roles` | Ansible roles directory |
 | `subtasks_directory_path` | `tasks/subtasks` | Role subtasks directory |
 | `binaries_directory_path` | `files` | Role binaries directory (for additional modules) |
@@ -172,13 +172,15 @@ Example Playbook
 
 Here is a playbook creating two JBoss EAP instances on every host in "jboss-master" and "jboss-slave":
 
+`vim /etc/ansible/playbooks/playbook.yml`
+
     ---
     - name: install and configure Red Hat Single Sign-On master
       hosts: host-master
       remote_user: root
       vars:
-        role_id: ansible-role-redhat-single-sign-on
-        ansible_roles_path: /etc/ansible/playbooks/roles
+        role_id: ansible-redhat-single-sign-on
+        ansible_roles_path: /etc/ansible/roles
         rhsso_apply_patches: true
         rhsso_remove_patches_after_install: false
         jboss:
@@ -202,14 +204,14 @@ Here is a playbook creating two JBoss EAP instances on every host in "jboss-mast
         metaspaceSize: "256M"
         maxMetaspaceSize: "512M"
       roles:
-        - { role: ansible-role-redhat-single-sign-on }
+        - role: ansible-redhat-single-sign-on
                                                                      
     - name: install and configure Red Hat Single Sign-On slave
       hosts: host-slave
       remote_user: root
       vars:
-        role_id: ansible-role-redhat-single-sign-on
-        ansible_roles_path: /etc/ansible/playbooks/roles
+        role_id: ansible-redhat-single-sign-on
+        ansible_roles_path: /etc/ansible/roles
         rhsso_apply_patches: true
         rhsso_remove_patches_after_install: false
         jboss:
@@ -234,25 +236,25 @@ Here is a playbook creating two JBoss EAP instances on every host in "jboss-mast
         metaspaceSize: "256M"
         maxMetaspaceSize: "512M"
       roles:
-        - { role: ansible-role-redhat-single-sign-on }
+        - role: ansible-redhat-single-sign-on
 
 PS. If your're in OSX, you maybe need to create the default installation structure at:
 ```
 $ brew install ansible
 
-mkdir /usr/local/etc/ansible
-mkdir /usr/local/etc/ansible/playbooks
-mkdir /usr/local/etc/ansible/roles
+mkdir /etc/ansible
+mkdir /etc/ansible/playbooks
+mkdir /etc/ansible/roles
 
-touch /usr/local/etc/ansible/ansible.cfg
-touch /usr/local/etc/ansible/hosts
+touch /etc/ansible/ansible.cfg
+touch /etc/ansible/hosts
 ```
 
 change `ansible.cfg` defaults:
 
 ```
 [defaults]
-inventory      = /usr/local/etc/ansible/hosts
+inventory      = /etc/ansible/hosts
 ```
 
 You can download an configuration example here:<br>
