@@ -19,3 +19,5 @@
     - name: "Attach to pool"
       command: subscription-manager attach --pool="{{ rhn_poolid }}"
   when: config.install_rhsm|bool
+  tags:
+    - preinstall

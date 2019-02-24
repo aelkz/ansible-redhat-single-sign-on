@@ -4,55 +4,77 @@
   fail:
     msg: "This role requires 'general.install_dir' to be set and non empty."
   when: general.install_dir is not defined or general.install_dir | length == 0
+  tags:
+    - check
 
 - name: "(00) check 'cli_dir' variable"
   fail:
     msg: "This role requires 'cli_dir' to be set and non empty as it defines some CLI files in 'cli_list'"
   when: cli_list.0 is defined and (cli_dir is not defined or cli_dir | length == 0)
+  tags:
+    - check
 
 - name: "(00) fail for missing red hat network username"
   fail:
     msg: "This role requires rhn_username to be set and non empty."
   when: rhn_username is not defined or rhn_username | length == 0
+  tags:
+    - check
 
 - name: "(00) fail for missing red hat network password"
   fail:
     msg: "This role requires rhn_password to be set and non empty."
   when: rhn_password is not defined or rhn_password | length == 0
+  tags:
+    - check
 
 - name: "(00) fail for missing role_id"
   fail:
     msg: "This role requires role_id to be set and non empty."
   when: role_id is not defined or role_id | length == 0
+  tags:
+    - check
 
 - name: "(00) fail for missing ansible_roles_path"
   fail:
     msg: "This role requires ansible_roles_path to be set and non empty."
   when: ansible_roles_path is not defined or ansible_roles_path | length == 0
+  tags:
+    - check
 
 - name: "(00) fail for missing ansible_roles_path"
   fail:
     msg: "This role requires ansible_roles_path to be set and non empty."
   when: ansible_roles_path is not defined or ansible_roles_path | length == 0
+  tags:
+    - check
 
 - name: "(00) fail for missing general.home_dir_name"
   fail:
     msg: "This role requires general.home_dir_name to be set and non empty."
   when: general.home_dir_name is not defined or general.home_dir_name | length == 0
+  tags:
+    - check
 
 - name: "(00) fail for missing general.instance_name"
   fail:
     msg: "This role requires general.instance_name to be set and non empty."
   when: general.instance_name is not defined or general.instance_name | length == 0
+  tags:
+    - check
 
 - name: "(00) fail for missing jboss.host_type"
   fail:
     msg: "This role requires jboss.host_type to be set and non empty (master | slave)."
   when: jboss.host_type is not defined or jboss.host_type | length == 0
           or (jboss.host_type != 'master' and jboss.host_type != 'slave')
+  tags:
+    - check
 
 - name: "(00) fail for missing jboss.domain_master_address"
   fail:
     msg: "This role requires jboss.domain_master_address to be set and non empty because you're installing a host-controller."
   when: (jboss.domain_master_address is not defined or jboss.domain_master_address | length == 0)
           and jboss.host_type == 'slave'
+  tags:
+    - check

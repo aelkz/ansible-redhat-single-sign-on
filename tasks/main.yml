@@ -36,9 +36,9 @@
   include: 06__apply_patches.yml
   become: true
 
-# - name: "07-EXECUTE ADDITIONAL CLI FILES"
-#   include: 07__execute_cli_files.yml
-#   become: true
+#- name: "07-EXECUTE ADDITIONAL CLI FILES"
+#  include: 07__execute_cli_files.yml
+#  become: true
 
 - name: "08-CLEAN UP INSTALLATION"
   include: 08__clean_up.yml

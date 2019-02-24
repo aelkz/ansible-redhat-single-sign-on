@@ -7,16 +7,22 @@
   when: conf_11.changed
   ignore_errors: yes
   register: cli_result
+  tags:
+    - cli
 
 - name: "(07) stop faulty instances"
   when: conf_11.changed and cli_result.failed is defined and cli_result.failed
   become_user: "{{ jboss.user }}"
   ignore_errors: yes
   shell: 'pkill -TERM -f "^java(.*){{ jboss_eap_instance_dir }}"'
+  tags:
+    - cli
 
 - name: "(07) show cli execution failure"
   when: conf_11.changed and cli_result.failed is defined and cli_result.failed
   fail: msg="One of the CLI commands failed."
+  tags:
+    - cli
 
 # /--------------------------------------------------------------------------------\
 # | TCP:TCPPING                                                                    |

@@ -4,4 +4,5 @@ test/roles/Maarc.rh-jboss-common
 .vault
 credentials.yml
 rhn_credentials.yml
-vars/rhn_credentials.yml
+vars/rhn_credentials.ymlvars/
+.vault

@@ -1,16 +1,56 @@
 ---
 
+- name: "(subtask 01) set inet address subnet"
+  set_fact:
+    subnet: "{{ config.inet_address_range }}"
+  tags:
+    - install
+
+# install this on ansible controller host
+# pip install netaddr
+- name: "(subtask 01) acquire interface ip address (inet-address)"
+  block:
+    - set_fact:
+        production_ip_addr: "{{ item }}"
+      when: "item | ipaddr(subnet)"
+      with_items: "{{ ansible_all_ipv4_addresses }}"
+    - debug: var=production_ip_addr
+  when: "not config.inet_address_range_ignore|bool"
+  tags:
+    - install
+
+- name: "(subtask 01) acquire ansible default interface ip address (inet-address)"
+  block:
+    - set_fact:
+        production_ip_addr: "{{ ansible_default_ipv4.address }}"
+    - debug: var=production_ip_addr
+  when: "config.inet_address_range_ignore|bool"
+  tags:
+    - install
+
 - name: "(subtask 01) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
+  tags:
+    - install
+
+- name: "(subtask 01) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
+  set_fact:
+    jboss_eap_home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
+  tags:
+    - install
 
 - name: "(subtask 01) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
+  tags:
+    - install
 
 - name: "(subtask 01) acquire red hat single sign-On {{ rhsso_artifact_version }} host-master configuration facts"
   set_fact:
     jboss_eap_domain_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/configuration"
+  tags:
+    - install
 
 - name: "(subtask 01) acquire red hat single sign-On {{ rhsso_artifact_version }} host-master configuration facts"
   set_fact:
@@ -18,6 +58,8 @@
     jboss_eap_host_master_xml_file: "{{ jboss_eap_domain_home }}/host-master.xml"
     jboss_eap_domain_server_one_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/servers/server-one/configuration"
     oracle_jdbc_driver: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
+  tags:
+    - install
 
 - name: "(subtask 01) configure red hat single sign-on host-master"
   lineinfile:
@@ -28,20 +70,26 @@
     backrefs: yes
     backup: yes
   with_items:
-    - {regexp: "^(.*).management:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address.management:{{ ansible_default_ipv4.address }}}\"/>"}
-    - {regexp: "^(.*).address:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address:{{ ansible_default_ipv4.address }}}\"/>"}
+    - {regexp: "^(.*).management:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address.management:{{ production_ip_addr }}}\"/>"}
+    - {regexp: "^(.*).address:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address:{{ production_ip_addr }}}\"/>"}
+  tags:
+    - install
 
 - name: "(subtask 01) clear {{ jboss_eap_host_master_xml_file }} file"
   lineinfile:
     dest: "{{ jboss_eap_host_master_xml_file }}"
     regexp: "^(.*)<server name=\"load-balancer\" group=\"load-balancer-group\"\/>"
     state: absent
+  tags:
+    - install
 
 - name: "(subtask 01) clear {{ jboss_eap_host_master_xml_file }} file"
   lineinfile:
     dest: "{{ jboss_eap_host_master_xml_file }}"
     regexp: "^(.*)<socket-bindings port-offset=\"150\"\/>"
     state: absent
+  tags:
+    - install
 
 - name: "(subtask 01) clear {{ jboss_eap_domain_xml_file }} file"
   blockinfile:
@@ -55,6 +103,8 @@
           </jvm>
           <socket-binding-group ref=\"load-balancer-sockets\"/>
       </server-group>
+  tags:
+    - install
 
 # xml ansible module requires phyton lxml
 - name: "(subtask 01) infinispan - change cache max-entries:realms"
@@ -62,77 +112,103 @@
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<local-cache name=\"realms\">$)(\\s*)(<eviction max-entries=\"10000\")(\\s*.*/>)"
     replace: "                    <local-cache name=\"realms\">\n                        <eviction max-entries=\"{{ infinispan.cache_realms_max_entries }}\" strategy=\"LRU\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache max-entries:users"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<local-cache name=\"users\">$)(\\s*)(<eviction max-entries=\"10000\")(\\s*.*/>)"
     replace: "                    <local-cache name=\"users\">\n                        <eviction max-entries=\"{{ infinispan.cache_users_max_entries }}\" strategy=\"LRU\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache max-entries:authorization"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<local-cache name=\"authorization\">$)(\\s*)(<eviction max-entries=\"10000\")(\\s*.*/>)"
     replace: "                    <local-cache name=\"authorization\">\n                        <eviction max-entries=\"{{ infinispan.cache_authorization_max_entries }}\" strategy=\"LRU\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache max-entries:keys"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<local-cache name=\"keys\">$)(\\s*)(<eviction\\s*.*/>)(\\s*)(<expiration.*/>\\.*\\s*)(</local-cache>)"
     replace: "                    <local-cache name=\"keys\">\n                        <eviction max-entries=\"{{ infinispan.cache_authorization_max_entries }}\" strategy=\"LRU\"/>\n                        <expiration max-idle=\"3600000\"/>\n                    </local-cache>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache max-entries and owners:actionTokens"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<distributed-cache name=\"actionTokens\".*>\\s*)(<eviction\\.*\\s*.*>)(\\s*)(<expiration.*/>\\.*\\s*)(</distributed-cache>)"
     replace: "                    <distributed-cache name=\"actionTokens\" mode=\"SYNC\" owners=\"{{ infinispan.owners_actiontokens }}\">\n                        <eviction max-entries=\"{{ infinispan.cache_actiontokens_max_entries }}\" strategy=\"NONE\"/>\n                        <expiration max-idle=\"-1\" interval=\"300000\"/>\n                    </distributed-cache>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache owners:sessions"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<distributed-cache name=\"sessions\".*/>)"
     replace: "                    <distributed-cache name=\"sessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_sessions }}\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache owners:authenticationSessions"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<distributed-cache name=\"authenticationSessions\".*/>)"
-    replace: "                    <distributed-cache name=\"sessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_authenticationsessions }}\"/>"
+    replace: "                    <distributed-cache name=\"authenticationSessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_authenticationsessions }}\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache owners:offlineSessions"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<distributed-cache name=\"offlineSessions\".*/>)"
-    replace: "                    <distributed-cache name=\"sessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_offlinesessions }}\"/>"
+    replace: "                    <distributed-cache name=\"offlineSessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_offlinesessions }}\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache owners:clientSessions"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<distributed-cache name=\"clientSessions\".*/>)"
-    replace: "                    <distributed-cache name=\"sessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_clientsessions }}\"/>"
+    replace: "                    <distributed-cache name=\"clientSessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_clientsessions }}\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache owners:offlineClientSessions"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<distributed-cache name=\"offlineClientSessions\".*/>)"
-    replace: "                    <distributed-cache name=\"sessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_offlineclientsessions }}\"/>"
+    replace: "                    <distributed-cache name=\"offlineClientSessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_offlineclientsessions }}\"/>"
+  tags:
+    - install
 
 - name: "(subtask 01) infinispan - change cache owners:loginFailures"
   replace:
     path: "{{ jboss_eap_domain_xml_file }}"
     regexp: "(^\\s*)(<distributed-cache name=\"loginFailures\".*/>)"
-    replace: "                    <distributed-cache name=\"sessions\" mode=\"SYNC\" owners=\"{{ infinispan.owners_loginfailures }}\"/>"
+    replace: "                    <distributed-cache name=\"loginFailures\" mode=\"SYNC\" owners=\"{{ infinispan.owners_loginfailures }}\"/>"
+  tags:
+    - install
 
 # JBoss EAP jgroups cluster user
 - name: "(subtask 01) check existence of jboss eap jgroups cluster user"
   shell: "grep '^{{ jboss.jgroups_user }}' {{ jboss_eap_domain_home }}/mgmt-users.properties"
   ignore_errors: yes
   register: cluster_user_exists
+  tags:
+    - install
 
 - name: "(subtask 01) create {{ jboss.jgroups_user }} jboss eap jgroups cluster user"
   shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.jgroups_password }} -u {{ jboss.jgroups_user }} -e -s"
   ignore_errors: yes
   when: cluster_user_exists.stdout == ""
+  tags:
+    - install
 
 - name: "(subtask 01) ensure {{ jboss.jgroups_user }} jboss eap jgroups cluster user was created"
   lineinfile:
@@ -142,22 +218,30 @@
   check_mode: yes
   register: jgroups_cluster_user
   failed_when: jgroups_cluster_user is failed
+  tags:
+    - install
 
 # Red Hat Single Sign-On administration console user
 - name: "(subtask 01) check existence of red hat single sign-on administration console user"
   shell: "grep '^    \"username\" : \"{{ jboss.keycloak_user }}\"' {{ jboss_eap_domain_home }}/keycloak-add-user.json"
   ignore_errors: yes
   register: keycloak_exists
+  tags:
+    - install
 
 - name: "(subtask 01) create {{ jboss.keycloak_user }} red hat single sign-on administration console user"
   shell: "{{ jboss_eap_bin_dir }}/add-user-keycloak.sh --domain --dc {{ jboss_eap_domain_home }} -r master -u {{ jboss.keycloak_user }} -p {{ jboss.keycloak_password }} --iterations 1024"
   when: keycloak_exists.stdout == ""
+  tags:
+    - install
 
 - name: "(subtask 01) ensure {{ jboss.keycloak_user }} red hat single sign-on administration console user was created"
   shell: "grep '^    \"username\" : \"{{ jboss.keycloak_user }}\"' {{ jboss_eap_domain_home }}/keycloak-add-user.json"
   ignore_errors: yes
   register: keycloak_admin_user
   failed_when: keycloak_admin_user.stdout == ""
+  tags:
+    - install
 
 - name: "(subtask 01) create {{ jboss_eap_domain_server_one_home }} directory"
   file:
@@ -166,6 +250,8 @@
     group: "{{ owner.group }}"
     state: directory
     mode: "755"
+  tags:
+    - install
 
 - name: "(subtask 01) copy {{ jboss_eap_domain_home }}/keycloak-add-user.json file to {{ jboss_eap_domain_server_one_home }}"
   become: true
@@ -176,3 +262,5 @@
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
     mode: "755"
+  tags:
+    - install

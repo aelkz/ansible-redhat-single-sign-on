@@ -31,28 +31,23 @@ rhsso_apply_patches: true
 rhsso_remove_patches_after_install: false
 
 rhsso_patches:
-  patch_1:
-    id: '7.2.1'
+  - id: '7.2.1'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=57071&product=core.service.rhsso
     filename: 72-1-patch.zip
     sha256checksum: 1aafaa63905b9edb6da934f0e7fe63734b5ae82434e029ef94ca70c27e7add6c
-  patch_2:
-    id: '7.2.2'
+  - id: '7.2.2'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=58111&product=core.service.rhsso
     filename: 72-2-patch.zip
     sha256checksum: 353a27833c8afa799a85155030e4ccde990bf0099aad35bb7587de01a82373d0 
-  patch_3:
-    id: '7.2.3'
+  - id: '7.2.3'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=58981&product=core.service.rhsso
     filename: 72-3-patch.zip
-    sha256checksum: 9f7b0c76287286bedfdcc0f18f0363201646b2cb738d861ac6336427ed646f69 
-  patch_4:
-    id: '7.2.4'
+    sha256checksum: 9f7b0c76287286bedfdcc0f18f0363201646b2cb738d861ac6336427ed646f69
+  - id: '7.2.4'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=60781&product=core.service.rhsso
     filename: 72-4-patch.zip
     sha256checksum: 654b8a308c592b847e4b31291158538afcb89099a0065cb555dc224ac5f5a06a
-  patch_5:
-    id: '7.2.5'
+  - id: '7.2.5'
     url: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=63001&product=core.service.rhsso
     filename: 72-5-patch.zip
     sha256checksum: e23add18383d3e1d7f269c991e5401072289756fe3b4ccf1dd1a1b1ef832e751
@@ -84,7 +79,7 @@ jboss:
   keycloak_user: admin
   keycloak_password: jboss@123
   host_type: master
-  domain_master_address: ""
+  domain_master_address:
 
 owner:
   user: sso
@@ -102,6 +97,8 @@ config:
   timezone_main: "America/Sao_Paulo"
   timezone_language: pt
   timezone_country: BR
+  inet_address_range: 192.168.100.0/24
+  inet_address_range_ignore: true
 
 
 # /--------------------------------------------------------------------------------\

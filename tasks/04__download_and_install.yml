@@ -3,11 +3,17 @@
 - name: "(04) acquire red hat single sign-On {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
+  tags:
+    - install
+    - patches
 
 - name: "(04) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
     jboss_eap_domain_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/configuration"
+  tags:
+    - install
+    - patches
 
 - name: "(04) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
@@ -22,6 +28,9 @@
     jboss_eap_log_file: "/var/log/{{ general.home_dir_name }}/{{ general.instance_name }}.log"
     jboss_eap_java_opts: "{{ jvm_java_opts | default('') if jvm_java_opts is defined else '' }}"
     jboss_eap_host_type: "{{ jboss.host_type }}"
+  tags:
+    - install
+    - patches
 
 - name: "(04) acquire red hat single sign-on {{ rhsso_artifact_version }} JVM configuration facts"
   set_fact:
@@ -38,16 +47,22 @@
     - "{{ '-XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+AggressiveOpts -XX:+UseCompressedOops' }}"
     - "{{ '-XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=' + compressedClassSpaceSize + ' -XX:MetaspaceSize=' + metaspaceSize + ' -XX:MaxMetaspaceSize=' + maxMetaspaceSize }}"
     - "{{ '-Djboss.server.base.dir=' + general.home_dir_name }}"
+  tags:
+    - install
 
 - name: "(04) check to see if pip is already installed"
   command: "pip --version"
   ignore_errors: true
   register: pip_is_installed
-  changed_when: false
+  changed_when: "False"
+  tags:
+    - install
 
 - name: "(04) download get-pip.py"
   get_url: "url=https://bootstrap.pypa.io/get-pip.py dest=/tmp/get-pip.py"
   when: pip_is_installed.rc != 0
+  tags:
+    - install
 
 # Install pip if it's not already installed, or if
 # the desired versions of pip aren't installed
@@ -57,14 +72,20 @@
   when: pip_is_installed.rc != 0
   args:
     chdir: /tmp
+  tags:
+    - install
 
 - name: "(04) install pip module: lxml"
   pip:
     name: lxml
+  tags:
+    - install
 
 - name: "(04) install pip module: requests"
   pip:
     name: requests
+  tags:
+    - install
 
 - name: "(04) create group for red hat single sign-On"
   group:
@@ -74,6 +95,8 @@
     gid: "{{ item.group_id }}"
   with_items:
     - "{{ owner }}"
+  tags:
+    - install
 
 - name: "(04) create user for red hat single sign-on"
   user:
@@ -85,6 +108,8 @@
     shell: "/bin/bash"
   with_items:
     - "{{ owner }}"
+  tags:
+    - install
 
 - name: "(04) create .bashrc file for the {{ owner.user }} user"
   template:
@@ -95,18 +120,24 @@
     mode: "0644"
   with_items:
     - "{{ owner }}"
+  tags:
+    - install
 
 - name: "(04) check existence of red hat single sign-on"
   become: true
   stat:
     path: "{{ jboss_eap_home }}"
   register: rhsso_installation_exists
+  tags:
+    - install
 
 - name: "(04) check existence of red hat single sign-on zip file"
   become: true
   stat:
     path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
   register: rhsso_zip_package_exists
+  tags:
+    - install
 
 - name: "(04) checksum existing rhsso server zip file"
   block:
@@ -121,12 +152,16 @@
       - "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
     when: server.stat.checksum != jboss_eap_checksum
   when: rhsso_zip_package_exists.stat.exists
+  tags:
+    - install
 
 - name: "(04) check existence of red hat single sign-on zip file"
   become: true
   stat:
     path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
   register: rhsso_zip_package_exists
+  tags:
+    - install
 
 - name: "(04) async download jboss eap from red hat customer portal"
   redhat_csp_download:
@@ -138,9 +173,9 @@
   poll: 0
   register: csp_rhsso_download
   no_log: true
-  tags:
-    - rhsso
   when: not rhsso_zip_package_exists.stat.exists
+  tags:
+    - install
 
 - name: "(04) check on red hat single sign-on {{ rhsso_artifact_version }} download completion"
   async_status: jid={{ csp_rhsso_download.ansible_job_id }}
@@ -148,9 +183,9 @@
   until: job_result1.finished
   retries: 600
   delay: 10
-  tags:
-    - rhsso
   when: not rhsso_zip_package_exists.stat.exists
+  tags:
+    - install
 
 - name: "(04) checksum rhsso server zip file"
   block:
@@ -162,22 +197,30 @@
   - fail:
       msg: "Failure, downloaded {{ rhsso_artifact_name }} file is corrupted."
     when: server.stat.checksum != jboss_eap_checksum
+  tags:
+    - install
 
 - name: "(04) remove existing installation"
   file: path={{ item }} state=absent
   with_items:
     - "{{ jboss_eap_home }}"
   when: rhsso_installation_exists.stat.exists
+  tags:
+    - install
 
 - name: "(04) check existence again of red hat single sign-on zip file"
   become: true
   stat:
     path: "{{ general.download_dir }}/{{ rhsso_artifact_name }}"
   register: rhsso_zip_package_exists
+  tags:
+    - install
 
 - fail:
     msg: "Failure, can't download {{ rhsso_artifact_name }} artifact from rhcsp."
   when: not rhsso_zip_package_exists.stat.exists
+  tags:
+    - install
 
 - name: "(04) extract red hat sign-on {{ rhsso_artifact_version }}"
   become: true
@@ -189,6 +232,8 @@
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
   when: rhsso_zip_package_exists.stat.exists and server.stat.checksum == jboss_eap_checksum
+  tags:
+    - install
 
 - name: "(04) change permissions on {{ jboss_eap_home }} installation directory"
   file:
@@ -197,6 +242,8 @@
     path: "{{ jboss_eap_home }}"
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
+  tags:
+    - install
 
 # /var/log/rh-sso-7.2
 - name: "(04) create {{ jboss_eap_log_directory }} log directory"
@@ -206,6 +253,8 @@
     group: "{{ owner.group }}"
     state: directory
     mode: "755"
+  tags:
+    - install
 
 # /var/run/rh-sso-7.2
 - name: "(04) create {{ general.instance_name }} service runtime data directory"
@@ -215,6 +264,8 @@
     group: "{{ owner.group }}"
     state: directory
     mode: "755"
+  tags:
+    - install
 
 # /etc/init.d/rh-sso
 - name: "(04) copy {{ jboss_eap_service_src_file }} service file to {{ jboss_eap_initd_service_file }}"
@@ -226,6 +277,8 @@
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
     mode: "755"
+  tags:
+    - install
 
 # /etc/default/rh-sso.conf
 - name: "(04) copy {{ jboss_eap_runtime_conf_src_file }} configuration file to {{ jboss_eap_runtime_conf_file }}"
@@ -235,6 +288,8 @@
     src: jboss-eap.conf.j2
     dest: "{{ jboss_eap_runtime_conf_file }}"
     mode: "755"
+  tags:
+    - install
 
 - name: "(04) modify {{ jboss_eap_initd_service_file }} file"
   lineinfile:
@@ -248,42 +303,58 @@
     - {regexp: "^# config:", line: "# config: {{ jboss_eap_runtime_conf_file }}"}
     - {regexp: "JBOSS_CONF=", line: "JBOSS_CONF='{{ jboss_eap_runtime_conf_file }}'"}
     - {regexp: "^  JBOSS_NAME", line: "JBOSS_NAME='{{ general.instance_name }}'"}
+  tags:
+    - install
 
 - name: "(04) clear {{ general.instance_name }} jvm JAVA_OPTS"
   lineinfile:
     dest: "{{ jboss_eap_runtime_conf_file }}"
     regexp: '^JAVA_OPTS="-Xms'
     state: absent
+  tags:
+    - install
 
 - name: "(04) set {{ general.instance_name }} jvm JAVA_OPTS"
   lineinfile:
     dest: "{{ jboss_eap_runtime_conf_file }}"
     line: "JAVA_OPTS=\"$JAVA_OPTS {{ jboss_eap_java_opts }}\""
+  tags:
+    - install
 
 - name: "(04) add {{ general.instance_name }} service"
   become: true
   command: "chkconfig --add {{ general.instance_name }}"
+  tags:
+    - install
 
 - name: "(04) enable {{ general.instance_name }} service"
   become: true
   service:
     name: "{{ general.instance_name }}"
     enabled: yes
+  tags:
+    - install
 
 # Reloading systemd. Should be executed here and not as a handler.
 - name: "(04) {{ general.instance_name }} reload systemd"
   command: systemctl daemon-reload
+  tags:
+    - install
 
 - name: "(04) remove 20-nproc.conf file"
   file: path={{ item }} state=absent
   with_items:
     - "/etc/security/limits.d/20-nproc.conf"
   ignore_errors: true
+  tags:
+    - install
 
 - name: "(04) configure {{ owner.user }} ulimit (max. open files for user)"
   lineinfile:
     path: /etc/security/limits.conf
     line: "{{ owner.user }}              -       nofile         65000"
+  tags:
+    - install
 
 - name: "(04) enforce secure permissions on password files"
   file:
@@ -294,9 +365,13 @@
   with_items:
     - mgmt-groups.properties
     - mgmt-users.properties
- 
+  tags:
+    - install
+
 - name: "(04) create jboss eap administration console user"
   shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.console_admin_password }} -u {{ jboss.console_admin_user }} -e -s"
+  tags:
+    - install
 
 - name: "(04) ensure jboss eap administration console user was created"
   lineinfile:
@@ -306,6 +381,8 @@
   check_mode: yes
   register: admin_console_user
   failed_when: admin_console_user is failed
+  tags:
+    - install
 
 - block:
     - name: "(04) deploy oracle jdbc driver"
@@ -353,15 +430,21 @@
       when: jboss_eap_host_type == "master"
 
   when: config.install_jdbc_oracle|bool
+  tags:
+    - install
 
-- name: "(04) set subtasks directory path facts"
-  set_fact:
-    subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
+- block:
+    - name: "(04) preparing master/slave installation"
+      set_fact:
+        subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
 
-- name: "(04) check and install host-master node"
-  include: "{{ subtasks_path }}/01_configure_host_master.yml"
-  when: jboss_eap_host_type == "master"
+    - name: "(04) prepare master installation"
+      include: "{{ subtasks_path }}/01_configure_host_master.yml"
+      when: jboss_eap_host_type == "master"
 
-- name: "(04) check and install host-slave node"
-  include: "{{ subtasks_path }}/02_configure_host_slave.yml"
-  when: jboss_eap_host_type == "slave"
+    - name: "(04) prepare slave installation"
+      include: "{{ subtasks_path }}/02_configure_host_slave.yml"
+      when: jboss_eap_host_type == "slave"
+  tags:
+    - install
+    - patches

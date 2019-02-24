@@ -127,6 +127,8 @@ Role Variables
 | `config.timezone_main` | `America/Sao_Paulo` | JBoss EAP timezone |
 | `config.timezone_language` | `pt` | JBoss EAP timezone language |
 | `config.timezone_country` | `BR` | JBoss EAP timezone country |
+| `config.inet-address-range` | `192.168.100.0/24` | Network interface CIDR that will match the host ip address, Ex: 192.168.100.<host-ip> (in case your host have more than one default network addresses). Must set `config.inet-address-range-ignore` to `false` |
+| `config.inet-address-range-ignore` | `true` | Ignore `config.inet-address-range` configuration and use the ansible provided `ansible_default_ipv4.address` |
 
 
 *JVM configurations*
@@ -275,6 +277,18 @@ Structure
 - `tasks/07__clean_up.yml` perform clean up of the environment
 - `tasks/08__start_servers.yml` perform servers startup
 - `vars/main.yml` centralize some convenience variables that should not be overridden
+
+
+Tags
+---------
+
+- `check` Check all required variables
+- `preinstall` Execute pre-installation tasks
+- `install` Execute installation tasks
+- `patches` Execute patch installation tasks
+- `cli` Execute cli tasks
+- `cleanup` Execute cleanup tasks
+- `postinstall` Execute post-installation tasks
 
 License
 -------

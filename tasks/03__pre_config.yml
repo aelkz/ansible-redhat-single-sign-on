@@ -10,6 +10,8 @@
     permanent: true
     state: enabled
   when: jboss.host_type == "master"
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 9999/tcp"
   firewalld:
@@ -17,18 +19,24 @@
     permanent: true
     state: enabled
   when: jboss.host_type == "master"
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 8080/tcp"
   firewalld:
     port: 8080/tcp
     permanent: true
     state: enabled
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 8443/tcp"
   firewalld:
     port: 8443/tcp
     permanent: true
     state: enabled
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 45700/udp"
   firewalld:
@@ -36,6 +44,8 @@
     permanent: true
     state: enabled
   when: jboss.host_type == "slave"
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 55200/udp"
   firewalld:
@@ -43,6 +53,8 @@
     permanent: true
     state: enabled
   when: jboss.host_type == "slave"
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 45688/udp"
   firewalld:
@@ -50,6 +62,8 @@
     permanent: true
     state: enabled
   when: jboss.host_type == "slave"
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 23364/udp"
   firewalld:
@@ -57,6 +71,8 @@
     permanent: true
     state: enabled
   when: jboss.host_type == "slave"
+  tags:
+    - preinstall
 
 - name: "(03) firewalld 7600/tcp"
   firewalld:
@@ -64,6 +80,10 @@
     permanent: true
     state: enabled
   when: jboss.host_type == "slave"
+  tags:
+    - preinstall
 
 - name: "(03) bounce firewalld"
   service: name=firewalld state=restarted
+  tags:
+    - preinstall

@@ -3,17 +3,30 @@
 - name: "(05) set patches checked constraints"
   set_fact:
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
+  tags:
+    - patches
 
 - name: "(05) set subtasks directory path facts"
   set_fact:
     subtasks_path: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
+  tags:
+    - patches
+
+- name: "(05) debug-01"
+  debug: msg={{ rhsso_patches }}
+  tags:
+    - patches
 
 - name: "(05) check and download red hat single sign-on patches"
   include: "{{ subtasks_path }}/03_check_and_download_patches.yml patch={{ item }}"
-  with_dict: "{{ rhsso_patches }}"
+  with_items: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool
+  tags:
+    - patches
 
 - name: "(05) checksum downloaded red hat single sign-on patches"
   include: "{{ subtasks_path }}/04_checksum_patches.yml patch={{ item }}"
-  with_dict: "{{ rhsso_patches }}"
+  with_items: "{{ rhsso_patches }}"
   when: rhsso_apply_patches|bool
+  tags:
+    - patches

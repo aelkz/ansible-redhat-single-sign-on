@@ -7,19 +7,19 @@
         url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
         dest: "/tmp"
       tags:
-        - common
+        - preinstall
 
     - name: Install EPEL for RHEL
       action: "{{ ansible_pkg_mgr }} name=/tmp/epel-release-latest-7.noarch.rpm state=present"
-      changed_when: False
+      changed_when: "False"
       tags:
-        - common
+        - preinstall
 
 - name: "(02) install {{ jvm_pkg_name }}"
   action: "{{ ansible_pkg_mgr }} name={{ jvm_pkg_name }} state=latest"
   when: config.install_java|bool
   tags:
-  - common
+  - preinstall
 
 - name: "(02) install packages"
   action: "{{ ansible_pkg_mgr }} name={{ item }} state=latest"
@@ -33,9 +33,11 @@
     - bash-completion-extras
     - vim
   tags:
-  - common
+    - preinstall
 
 - name: "(02) upgrade all packages"
   yum:
     name: '*'
     state: latest
+  tags:
+    - preinstall

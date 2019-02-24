@@ -2,52 +2,68 @@
 
 - set_fact:
     obj: "{{ item }}"
+  tags:
+    - patches
 
-- name: "(subtask 04) Acquire Red Hat Single Sign-On {{ obj.value.id }} patch sha256 checkum facts"
+- name: "(subtask 04) Acquire Red Hat Single Sign-On {{ obj.id }} patch sha256 checkum facts"
   set_fact:
-    patch_checksum: "{{ obj.value.sha256checksum }}"
+    patch_checksum: "{{ obj.sha256checksum }}"
+  tags:
+    - patches
 
 # check before
 - stat:
-    path: "{{ general.download_dir }}/{{ obj.value.filename }}"
+    path: "{{ general.download_dir }}/{{ obj.filename }}"
     checksum_algorithm: sha256
   register: checksum_result
+  tags:
+    - patches
 
-- name: "(subtask 04) deleting patch id:{{ obj.value.id }} - reason: checksum failed or download corrupted."
+- name: "(subtask 04) deleting patch id:{{ obj.id }} - reason: checksum failed or download corrupted."
   file: path={{ item }} state=absent
   with_items:
-    - "{{ general.download_dir }}/{{ obj.value.filename }}"
+    - "{{ general.download_dir }}/{{ obj.filename }}"
   ignore_errors: true
   when: checksum_result.stat.checksum != patch_checksum
+  tags:
+    - patches
 
-- name: "(subtask 04) download red hat single sign-on patch id:{{ obj.value.id }}"
+- name: "(subtask 04) download red hat single sign-on patch id:{{ obj.id }}"
   redhat_csp_download: 
-    url: "{{ obj.value.url }}"
-    dest: "{{ general.download_dir }}/{{ obj.value.filename }}"
+    url: "{{ obj.url }}"
+    dest: "{{ general.download_dir }}/{{ obj.filename }}"
     username: "{{ rhn_username }}"
     password: "{{ rhn_password }}"
   vars:
     debug:
-      msg: "Downloading {{ obj.key }} : {{ obj.value.id }} from: {{ obj.value.url }}"
+      msg: "Downloading {{ obj.key }} : {{ obj.id }} from: {{ obj.url }}"
   async: 600
   poll: 0
   register: patch_download_request
   when: checksum_result.stat.checksum != patch_checksum
+  tags:
+    - patches
 
-- name: "(subtask 04) check on red hat single sign-on {{ rhsso_artifact_version }} patch id:{{ obj.value.id }} download thread"
+- name: "(subtask 04) check on red hat single sign-on {{ rhsso_artifact_version }} patch id:{{ obj.id }} download thread"
   async_status: jid={{ patch_download_request.ansible_job_id }}
   register: jobs_result
   until: jobs_result.finished
   retries: 60
   delay: 10
   when: checksum_result.stat.checksum != patch_checksum
+  tags:
+    - patches
 
 # check again after download
 - stat:
-    path: "{{ general.download_dir }}/{{ obj.value.filename }}"
+    path: "{{ general.download_dir }}/{{ obj.filename }}"
     checksum_algorithm: sha256
   register: checksum_result
+  tags:
+    - patches
 
 - fail:
-    msg: "Failure, downloaded patch version {{ obj.value.id }} is corrupted. Check your network connection."
+    msg: "Failure, downloaded patch version {{ obj.id }} is corrupted. Check your network connection."
   when: checksum_result.stat.checksum != patch_checksum
+  tags:
+    - patches

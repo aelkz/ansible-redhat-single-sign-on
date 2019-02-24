@@ -1,34 +1,70 @@
 ---
 
-- name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
+- name: "(subtask 01) set inet address subnet"
   set_fact:
-    ip: "{{ ansible_default_ipv4.address }}"
+    subnet: "{{ config.inet_address_range }}"
+  tags:
+    - install
+
+# install this on ansible controller host
+# pip install netaddr
+- name: "(subtask 01) acquire interface ip address (inet-address)"
+  block:
+    - set_fact:
+        production_ip_addr: "{{ item }}"
+      when: "item | ipaddr(subnet)"
+      with_items: "{{ ansible_all_ipv4_addresses }}"
+    - debug: var=production_ip_addr
+  when: "not config.inet_address_range_ignore|bool"
+  tags:
+    - install
+
+- name: "(subtask 01) acquire ansible default interface ip address (inet-address)"
+  block:
+    - set_fact:
+        production_ip_addr: "{{ ansible_default_ipv4.address }}"
+    - debug: var=production_ip_addr
+  when: "config.inet_address_range_ignore|bool"
+  tags:
+    - install
 
 # acquire the last 3 digits of the ip address of host (for naming purposes only).
 - name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
   set_fact:
-    host_number: "{{ ip.split('.')[-1][-3:] }}"
+    host_number: "{{ production_ip_addr.split('.')[-1][-3:] }}"
+  tags:
+    - install
 
 - name: "(subtask 02) show host number"
   debug: msg={{ host_number }}
+  tags:
+    - install
 
 - name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_home: "{{ general.install_dir }}/{{ general.home_dir_name }}"
+  tags:
+    - install
 
 - name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} directory configuration facts"
   set_fact:
     jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
+  tags:
+    - install
 
 - name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
   set_fact:
     jboss_eap_domain_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/configuration"
+  tags:
+    - install
 
 - name: "(subtask 02) acquire red hat single sign-on {{ rhsso_artifact_version }} host-slave configuration facts"
   set_fact:
     jboss_eap_domain_xml_file: "{{ jboss_eap_domain_home }}/domain.xml"
     jboss_eap_host_slave_xml_file: "{{ jboss_eap_domain_home }}/host-slave.xml"
     oracle_jdbc_driver: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
+  tags:
+    - install
 
 - name: "(subtask 02) configure red hat single sign-on host-slave"
   lineinfile:
@@ -43,9 +79,11 @@
     - {regexp: "^(.*)secret value(.*)$", line: "                    <secret value=\"{{ jboss.jgroups_password | b64encode }}\"/>"}
     - {regexp: "^(.*)remote username(.*)$", line: "        <remote username=\"{{ jboss.jgroups_user }}\" security-realm=\"ManagementRealm\">"}
     - {regexp: "^(.*).master.address:127.0.0.1(.*)$", line: "                <static-discovery name=\"primary\" protocol=\"${jboss.domain.master.protocol:remote}\" host=\"${jboss.domain.master.address:{{ jboss.domain_master_address }}}\" port=\"${jboss.domain.master.port:9999}\"/>"}
-    - {regexp: "^(.*)management:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address.management:{{ ansible_default_ipv4.address }}}\"/>"}
-    - {regexp: "^(.*)jboss.bind.address:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address:{{ ansible_default_ipv4.address }}}\"/>"}
+    - {regexp: "^(.*)management:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address.management:{{ production_ip_addr }}}\"/>"}
+    - {regexp: "^(.*)jboss.bind.address:127.0.0.1(.*)$", line: "            <inet-address value=\"${jboss.bind.address:{{ production_ip_addr }}}\"/>"}
     - {regexp: "^(.*)server name(.*)$", line: "        <server name=\"server-two\" group=\"auth-server-group\" auto-start=\"true\">"}
+  tags:
+    - install
 
 - name: "(03 subtask 01) add private interface for use with jgroups subsystem"
   blockinfile:
@@ -53,11 +91,15 @@
     insertbefore: "</interfaces>"    
     block: |
         <interface name="private">
-            <inet-address value="${jboss.bind.address:{{ ansible_default_ipv4.address }}}"/>
+            <inet-address value="${jboss.bind.address:{{ production_ip_addr }}}"/>
         </interface>
+  tags:
+    - install
 
 - name: "(subtask 02) clear {{ jboss_eap_host_slave_xml_file }} file"
   lineinfile:
     dest: "{{ jboss_eap_host_slave_xml_file }}"
     regexp: "^(.*)<socket-bindings port-offset=\"250\"/>"
     state: absent
+  tags:
+    - install
