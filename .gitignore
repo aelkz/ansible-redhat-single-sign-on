@@ -1,8 +1,8 @@
-test/roles/chrismeyersfsu.provision_docker
-test/roles/Maarc.rh-jboss-common
 *.retry
 .vault
 credentials.yml
 rhn_credentials.yml
-vars/rhn_credentials.ymlvars/
+vars/rhn_credentials.yml
 .vault
+.vault
+vars/
