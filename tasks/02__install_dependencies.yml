@@ -39,5 +39,7 @@
   yum:
     name: '*'
     state: latest
+  retries: 3
+  delay: 10
   tags:
     - preinstall

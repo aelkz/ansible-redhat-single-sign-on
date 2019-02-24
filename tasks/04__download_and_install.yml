@@ -42,10 +42,13 @@
     - "{{ '-Djava.net.preferIPv4Stack=true' }}"
     - "{{ '-Djava.security.egd=file:/dev/./urandom' }}"
     - "{{ '-Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS -Djava.awt.headless=true' }}"
-    - "{{ '-server -XX:+DoEscapeAnalysis -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -XX:MaxGCPauseMillis=500 -XX:+UseLargePages' }}"
-    - "{{ '-Xmx' + jvm_xmx + ' -Xms' + jvm_xms + ' -verbose:gc -Xloggc:gc.log.`date +%d%m%Y%H%M%S` -XX:+PrintGCDetails' }}"
+    - "{{ '-server -XX:+DoEscapeAnalysis -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent' }}"
+    - "{{ '-XX:MaxGCPauseMillis=500 -XX:+UseLargePages' }}"
+    - "{{ '-Xmx' + jvm_xmx + ' -Xms' + jvm_xms + ' -verbose:gc -Xloggc:gc.log.`date +%d%m%Y%H%M%S`' }}"
+    - "{{ '-XX:+PrintGCDetails' }}"
     - "{{ '-XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+AggressiveOpts -XX:+UseCompressedOops' }}"
-    - "{{ '-XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=' + compressedClassSpaceSize + ' -XX:MetaspaceSize=' + metaspaceSize + ' -XX:MaxMetaspaceSize=' + maxMetaspaceSize }}"
+    - "{{ '-XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=' + compressedClassSpaceSize }}"
+    - "{{ ' -XX:MetaspaceSize=' + metaspaceSize + ' -XX:MaxMetaspaceSize=' + maxMetaspaceSize }}"
     - "{{ '-Djboss.server.base.dir=' + general.home_dir_name }}"
   tags:
     - install
@@ -78,12 +81,16 @@
 - name: "(04) install pip module: lxml"
   pip:
     name: lxml
+  retries: 3
+  delay: 10
   tags:
     - install
 
 - name: "(04) install pip module: requests"
   pip:
     name: requests
+  retries: 3
+  delay: 10
   tags:
     - install
 
@@ -252,7 +259,7 @@
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
     state: directory
-    mode: "755"
+    mode: "0755"
   tags:
     - install
 
@@ -263,7 +270,7 @@
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
     state: directory
-    mode: "755"
+    mode: "0755"
   tags:
     - install
 
@@ -276,7 +283,7 @@
     remote_src: True
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
-    mode: "755"
+    mode: "0755"
   tags:
     - install
 
@@ -287,7 +294,7 @@
     group: "{{ owner.group }}"
     src: jboss-eap.conf.j2
     dest: "{{ jboss_eap_runtime_conf_file }}"
-    mode: "755"
+    mode: "0755"
   tags:
     - install
 
@@ -335,9 +342,9 @@
   tags:
     - install
 
-# Reloading systemd. Should be executed here and not as a handler.
 - name: "(04) {{ general.instance_name }} reload systemd"
-  command: systemctl daemon-reload
+  systemd:
+    daemon_reload: yes
   tags:
     - install
 
@@ -369,7 +376,9 @@
     - install
 
 - name: "(04) create jboss eap administration console user"
-  shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.console_admin_password }} -u {{ jboss.console_admin_user }} -e -s"
+  shell: >
+    {{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.console_admin_password }}
+    -u {{ jboss.console_admin_user }} -e -s
   tags:
     - install
 
@@ -390,11 +399,13 @@
         src: "{{ binaries_directory_path }}/ojdbc8.jar"
         dest: "{{ general.download_dir }}/ojdbc8.jar"
 
-    # this will translate to something like:
-    # bash -c 'nohup /usr/share/rh-sso-7.2/bin/jboss-cli.sh --command="module add --name=com.oracle --resources=/tmp/ojdbc8.jar --dependencies=javax.api,javax.transaction.api" && pkill -TERM -f "^java(.*)/usr/share/rh-sso-7.2"'
     - name: "(04) execute cli: install oracle dbms module (jdbc driver)"
+      become: yes
       become_user: "{{ owner.user }}"
-      shell: "bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --command=\"module add --name=com.oracle --resources={{ general.download_dir }}/ojdbc8.jar --dependencies=javax.api,javax.transaction.api\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'"
+      shell: >
+        bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --command=\"module add --name=com.oracle
+        --resources={{ general.download_dir }}/ojdbc8.jar --dependencies=javax.api,javax.transaction.api\"
+        && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'
       ignore_errors: yes
 
     - name: "(04) change permissions on {{ jboss_eap_home }} installation directory"
@@ -419,8 +430,12 @@
       when: jboss_eap_host_type == "master"
 
     - name: "(04) execute cli: install oracle dbms module (jdbc driver)"
+      become: yes
       become_user: "{{ owner.user }}"
-      shell: "bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --connect --controller=127.0.0.1:9990 --command=\"/profile=auth-server-clustered/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=com.oracle, driver-name=oracle)\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'"
+      shell: >
+        bash -c 'nohup {{ jboss_eap_home }}/bin/jboss-cli.sh --connect --controller=127.0.0.1:9990
+        --command=\"/profile=auth-server-clustered/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=
+        com.oracle, driver-name=oracle)\" && pkill -TERM -f \"^java(.*){{ jboss_eap_home }}\"'
       ignore_errors: yes
       register: oracle_jdbc_driver_cli_result
       when: jboss_eap_host_type == "master"

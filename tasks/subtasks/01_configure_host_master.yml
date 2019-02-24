@@ -56,7 +56,8 @@
   set_fact:
     jboss_eap_domain_xml_file: "{{ jboss_eap_domain_home }}/domain.xml"
     jboss_eap_host_master_xml_file: "{{ jboss_eap_domain_home }}/host-master.xml"
-    jboss_eap_domain_server_one_home: "{{ general.install_dir }}/{{ general.home_dir_name }}/domain/servers/server-one/configuration"
+    jboss_eap_domain_server_one_home: >
+      {{ general.install_dir }}/{{ general.home_dir_name }}/domain/servers/server-one/configuration
     oracle_jdbc_driver: "{{ ansible_roles_path }}/{{ role_id }}/{{ subtasks_directory_path }}"
   tags:
     - install
@@ -78,7 +79,7 @@
 - name: "(subtask 01) clear {{ jboss_eap_host_master_xml_file }} file"
   lineinfile:
     dest: "{{ jboss_eap_host_master_xml_file }}"
-    regexp: "^(.*)<server name=\"load-balancer\" group=\"load-balancer-group\"\/>"
+    regexp: "^(.*)<server name=\"load-balancer\" group=\"load-balancer-group\"/>"
     state: absent
   tags:
     - install
@@ -86,7 +87,7 @@
 - name: "(subtask 01) clear {{ jboss_eap_host_master_xml_file }} file"
   lineinfile:
     dest: "{{ jboss_eap_host_master_xml_file }}"
-    regexp: "^(.*)<socket-bindings port-offset=\"150\"\/>"
+    regexp: "^(.*)<socket-bindings port-offset=\"150\"/>"
     state: absent
   tags:
     - install
@@ -204,7 +205,9 @@
     - install
 
 - name: "(subtask 01) create {{ jboss.jgroups_user }} jboss eap jgroups cluster user"
-  shell: "{{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.jgroups_password }} -u {{ jboss.jgroups_user }} -e -s"
+  shell: >
+    {{ jboss_eap_bin_dir }}/add-user.sh -dc {{ jboss_eap_domain_home }} -p {{ jboss.jgroups_password }}
+    -u {{ jboss.jgroups_user }} -e -s
   ignore_errors: yes
   when: cluster_user_exists.stdout == ""
   tags:
@@ -230,7 +233,9 @@
     - install
 
 - name: "(subtask 01) create {{ jboss.keycloak_user }} red hat single sign-on administration console user"
-  shell: "{{ jboss_eap_bin_dir }}/add-user-keycloak.sh --domain --dc {{ jboss_eap_domain_home }} -r master -u {{ jboss.keycloak_user }} -p {{ jboss.keycloak_password }} --iterations 1024"
+  shell: >
+    {{ jboss_eap_bin_dir }}/add-user-keycloak.sh --domain --dc {{ jboss_eap_domain_home }} -r master
+    -u {{ jboss.keycloak_user }} -p {{ jboss.keycloak_password }} --iterations 1024
   when: keycloak_exists.stdout == ""
   tags:
     - install
@@ -249,7 +254,7 @@
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
     state: directory
-    mode: "755"
+    mode: "0755"
   tags:
     - install
 
@@ -261,6 +266,6 @@
     remote_src: True
     owner: "{{ owner.user }}"
     group: "{{ owner.group }}"
-    mode: "755"
+    mode: "0755"
   tags:
     - install

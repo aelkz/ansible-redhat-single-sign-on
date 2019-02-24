@@ -10,7 +10,8 @@
     - cleanup
 
 - name: "(08) remove {{ rhsso_artifact_version }} server zip file (free up space from /tmp)"
-  shell: "/bin/rm -rf {{ general.download_dir }}/{{ rhsso_artifact_name }}"
+  file: path="{{ general.download_dir }}/{{ rhsso_artifact_name }}" state=absent
+  ignore_errors: true
   when: rhsso_remove_patches_after_install|bool
   tags:
     - cleanup

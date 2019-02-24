@@ -28,6 +28,7 @@
 
 # problem when using with_dict because dictionaries does not sort properly, letting a later patch being applied first.
 - name: "(subtask 05) applying red hat single sign-on patch id:{{ obj.id }}"
+  become: yes
   become_user: "{{ owner.user }}"
   command: "{{ jboss_eap_bin_dir }}/jboss-cli.sh 'patch apply {{ general.download_dir }}/{{ obj.filename }} --verbose --override-all'"
   ignore_errors: true
