@@ -4,13 +4,13 @@
   block:
     - name: Download EPEL for RHEL
       get_url:
-        url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+        url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
         dest: "/tmp"
       tags:
         - preinstall
 
     - name: Install EPEL for RHEL
-      action: "{{ ansible_pkg_mgr }} name=/tmp/epel-release-latest-7.noarch.rpm state=present"
+      action: "{{ ansible_pkg_mgr }} name=/tmp/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm state=present"
       changed_when: "False"
       tags:
         - preinstall
